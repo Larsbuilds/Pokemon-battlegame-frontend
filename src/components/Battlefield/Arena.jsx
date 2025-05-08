@@ -15,9 +15,7 @@ const Arena = () => {
         backgroundPosition: "center",
       }}
       className=" h-[566px] w-[944px] mx-auto my-auto rounded-[25px] shadow flex justify-center items-center align-middle"
-    >
-      ARENA SCREEN
-    </div>
+    ></div>
   );
 };
 

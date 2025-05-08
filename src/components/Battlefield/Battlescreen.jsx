@@ -4,28 +4,27 @@ import Arena from "./Arena";
 import PlayerOverview from "./PlayerOverview";
 import ActionButtons from "./ActionButtons";
 import { useBattle } from "../../context/BattleContext";
+import ActivePokemon from "./ActivePokemon";
+import HealthBar from "./HealthBar";
 
 const Battlescreen = () => {
-  const { opponentPokemon, battleData } = useBattle();
+  const { opponentPokemon, battleData, playerPokemon } = useBattle();
 
-  const [playerPokemon, setPlayerPokemon] = useState([]);
-  const [oppPokemon, setOppPokemon] = useState([]);
-  const [playerActivePokemon, SetPlayerActivePokemon] = useState(null);
-  const [oppActivePokemon, SetOppActivePokemon] = useState(null);
+  const [playerActivePokemon, setPlayerActivePokemon] = useState(null);
+  const [oppActivePokemon, setOppActivePokemon] = useState(null);
 
   useEffect(() => {
-    if (opponentPokemon.length > 0) {
-      const updated = opponentPokemon.map((e) => ({
-        ...e,
-        currLife: e.stats[0].base_stat,
-      }));
-      setPlayerPokemon(updated);
-      console.log("Player ", playerPokemon);
+    if (playerPokemon?.length > 0) {
+      setPlayerActivePokemon(playerPokemon[0]);
     }
-  }, []);
+    if (opponentPokemon?.length > 0) {
+      setOppActivePokemon(opponentPokemon[0]);
+    }
+  }, [playerPokemon, opponentPokemon]);
 
   console.log("Opponent", opponentPokemon);
-  console.log("BattleData", battleData);
+
+  console.log("Player", playerPokemon);
 
   return (
     <div className="bg-cyan-950 p-4">
@@ -35,15 +34,24 @@ const Battlescreen = () => {
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
-        className=" h-full w-full flex flex-col justify-center items-center align-middle"
+        className=" h-full w-full flex flex-col justify-center items-center"
       >
-        <div className="z-50 absolute w-[1120px] flex justify-between">
-          <PlayerOverview player={1} pokemon={opponentPokemon} />
+        <div className="z-50 absolute w-[1120px] flex items-center justify-between px-8">
+          <PlayerOverview player={1} pokemon={playerPokemon} />
+          <div className="flex-1 flex justify-center">
+            <div className="flex flex-col h-[65vh]">
+              <HealthBar
+                playerPkmn={playerActivePokemon}
+                oppPkmn={oppActivePokemon}
+              />
+              <ActivePokemon
+                playerPkmn={playerActivePokemon}
+                oppPkmn={oppActivePokemon}
+              />
+            </div>
+          </div>
           <PlayerOverview player={2} pokemon={opponentPokemon} />
         </div>
-        {/* <div className="z-50 absolute h-[566px] flex align-bottom">
-          
-        </div> */}
         <Arena />
         <ActionButtons />
       </div>
