@@ -11,16 +11,11 @@ export const useRoster = () => {
 };
 
 export const RosterProvider = ({ children }) => {
-  const [roster, setRoster] = useState([]);
-  const MAX_ROSTER_SIZE = 6;
-
-  // Load roster from localStorage on initial render
-  useEffect(() => {
+  const [roster, setRoster] = useState(() => {
     const savedRoster = localStorage.getItem('pokemonRoster');
-    if (savedRoster) {
-      setRoster(JSON.parse(savedRoster));
-    }
-  }, []);
+    return savedRoster ? JSON.parse(savedRoster) : [];
+  });
+  const MAX_ROSTER_SIZE = 6;
 
   // Save roster to localStorage whenever it changes
   useEffect(() => {

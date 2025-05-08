@@ -4,6 +4,11 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  safelist: [
+    'hover:shadow-[0_0_32px_8px_#27ae60]',
+    'hover:shadow-lg',
+    'shadow-md'
+  ],
   theme: {
     extend: {
       colors: {
