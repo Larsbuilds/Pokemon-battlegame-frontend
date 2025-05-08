@@ -1,13 +1,17 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom'
 import TypeBadge from './TypeBadge'
 import OptimizedImage from './OptimizedImage'
 import { usePokemonCache } from '../hooks/usePokemonCache'
+import { useRoster } from '../context/RosterContext'
 
-export default function PokemonCard({ name }) {
+const PokemonCard = ({ name }) => {
   const [pokemon, setPokemon] = useState(null)
   const [isVisible, setIsVisible] = useState(false)
+  const [isInRoster, setIsInRoster] = useState(false)
   const { getPokemon } = usePokemonCache()
+  const { roster, addToRoster } = useRoster()
 
   useEffect(() => {
     const fetchPokemon = async () => {
@@ -24,6 +28,31 @@ export default function PokemonCard({ name }) {
 
     return () => setIsVisible(false)
   }, [name, getPokemon])
+
+  useEffect(() => {
+    if (pokemon) {
+      setIsInRoster(roster.some(p => p.id === pokemon.id))
+    }
+  }, [pokemon, roster])
+
+  const handleAddToRoster = async (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!pokemon) return
+
+    try {
+      const pokemonData = {
+        id: pokemon.id,
+        name: pokemon.name,
+        sprite: pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default,
+        types: pokemon.types.map(t => t.type.name)
+      }
+      await addToRoster(pokemonData)
+    } catch (error) {
+      console.error('Error adding to roster:', error)
+      // You might want to show a toast notification here
+    }
+  }
 
   if (!pokemon || !isVisible) {
     return null
@@ -61,7 +90,26 @@ export default function PokemonCard({ name }) {
             <TypeBadge key={type.type.name} type={type.type.name} />
           ))}
         </div>
+
+        {/* Add to Roster Button */}
+        <button
+          onClick={handleAddToRoster}
+          disabled={isInRoster}
+          className={`mt-4 w-full py-2 px-4 rounded-lg transition-colors duration-300 ${
+            isInRoster
+              ? 'bg-gray-300 cursor-not-allowed'
+              : 'bg-pokemon-blue text-white hover:bg-pokemon-blue/80'
+          }`}
+        >
+          {isInRoster ? 'In Roster' : 'Add to Roster'}
+        </button>
       </div>
     </Link>
-  )
-} 
+  );
+};
+
+PokemonCard.propTypes = {
+  name: PropTypes.string.isRequired,
+};
+
+export default PokemonCard; 
