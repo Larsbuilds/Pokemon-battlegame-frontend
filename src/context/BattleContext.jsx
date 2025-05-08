@@ -1,11 +1,11 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 const BattleContext = createContext();
 
 export const useBattle = () => {
   const context = useContext(BattleContext);
   if (!context) {
-    throw new Error('useBattle must be used within a BattleProvider');
+    throw new Error("useBattle must be used within a BattleProvider");
   }
   return context;
 };
@@ -17,9 +17,9 @@ export const BattleProvider = ({ children }) => {
   // Load battle data and opponent team from localStorage on initial render
   useEffect(() => {
     try {
-      const savedBattleData = localStorage.getItem('pokemonBattleData');
-      const savedOpponentTeam = localStorage.getItem('opponentTeam');
-      
+      const savedBattleData = localStorage.getItem("pokemonBattleData");
+      const savedOpponentTeam = localStorage.getItem("opponentTeam");
+
       if (savedBattleData) {
         setBattleData(JSON.parse(savedBattleData));
       }
@@ -27,7 +27,7 @@ export const BattleProvider = ({ children }) => {
         setOpponentPokemon(JSON.parse(savedOpponentTeam));
       }
     } catch (error) {
-      console.error('Error loading battle data:', error);
+      console.error("Error loading battle data:", error);
     }
   }, []);
 
@@ -35,48 +35,54 @@ export const BattleProvider = ({ children }) => {
   useEffect(() => {
     try {
       // Only store essential battle data
-      const essentialBattleData = Object.entries(battleData).reduce((acc, [id, data]) => {
-        acc[id] = {
-          stats: data.stats,
-          moves: data.moves?.slice(0, 4), // Only store first 4 moves
-          abilities: data.abilities,
-          sprites: {
-            front_default: data.images?.front_default,
-            back_default: data.images?.back_default,
-          }
-        };
-        return acc;
-      }, {});
+      const essentialBattleData = Object.entries(battleData).reduce(
+        (acc, [id, data]) => {
+          acc[id] = {
+            stats: data.stats,
+            moves: data.moves?.slice(0, 4), // Only store first 4 moves
+            abilities: data.abilities,
+            sprites: {
+              front_default: data.images?.front_default,
+              back_default: data.images?.back_default,
+            },
+          };
+          return acc;
+        },
+        {}
+      );
 
-      localStorage.setItem('pokemonBattleData', JSON.stringify(essentialBattleData));
+      localStorage.setItem(
+        "pokemonBattleData",
+        JSON.stringify(essentialBattleData)
+      );
     } catch (error) {
-      console.error('Error saving battle data:', error);
+      console.error("Error saving battle data:", error);
     }
   }, [battleData]);
 
   // Save opponent team to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('opponentTeam', JSON.stringify(opponentPokemon));
+      localStorage.setItem("opponentTeam", JSON.stringify(opponentPokemon));
     } catch (error) {
-      console.error('Error saving opponent team:', error);
+      console.error("Error saving opponent team:", error);
     }
   }, [opponentPokemon]);
 
   const updateBattleData = (pokemonId, data) => {
-    setBattleData(prev => ({
+    setBattleData((prev) => ({
       ...prev,
       [pokemonId]: {
         ...prev[pokemonId],
-        ...data
-      }
+        ...data,
+      },
     }));
   };
 
   const getPowerLevel = (totalStats) => {
-    if (totalStats >= 500) return 'strong';
-    if (totalStats >= 300) return 'medium';
-    return 'weak';
+    if (totalStats >= 500) return "strong";
+    if (totalStats >= 300) return "medium";
+    return "weak";
   };
 
   const replaceOpponentPokemon = async (index) => {
@@ -97,11 +103,11 @@ export const BattleProvider = ({ children }) => {
           images: newPokemon[0].sprites,
           sounds: newPokemon[0].cries,
           stats: newPokemon[0].stats,
-          moves: newPokemon[0].moves
+          moves: newPokemon[0].moves,
         });
       }
     } catch (error) {
-      console.error('Error replacing opponent Pokemon:', error);
+      console.error("Error replacing opponent Pokemon:", error);
     }
   };
 
@@ -109,24 +115,24 @@ export const BattleProvider = ({ children }) => {
     // Only generate new team if we don't have one
     if (opponentPokemon.length === 0) {
       try {
-        const strongPokemon = await fetchRandomPokemon(2, 'strong');
-        const mediumPokemon = await fetchRandomPokemon(2, 'medium');
-        const weakPokemon = await fetchRandomPokemon(2, 'weak');
+        const strongPokemon = await fetchRandomPokemon(2, "strong");
+        const mediumPokemon = await fetchRandomPokemon(2, "medium");
+        const weakPokemon = await fetchRandomPokemon(2, "weak");
 
         const team = [...strongPokemon, ...mediumPokemon, ...weakPokemon];
         setOpponentPokemon(team);
 
         // Store battle data for each opponent Pokemon
-        team.forEach(pokemon => {
+        team.forEach((pokemon) => {
           updateBattleData(pokemon.id, {
             images: pokemon.sprites,
             sounds: pokemon.cries,
             stats: pokemon.stats,
-            moves: pokemon.moves
+            moves: pokemon.moves,
           });
         });
       } catch (error) {
-        console.error('Error generating opponent team:', error);
+        console.error("Error generating opponent team:", error);
       }
     }
   };
@@ -136,24 +142,29 @@ export const BattleProvider = ({ children }) => {
     const baseStats = {
       strong: { min: 500, max: 700 },
       medium: { min: 300, max: 500 },
-      weak: { min: 100, max: 300 }
+      weak: { min: 100, max: 300 },
     };
 
     while (pokemon.length < count) {
       // Only use Pokemon from the first 151
       const randomId = Math.floor(Math.random() * 151) + 1;
       try {
-        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${randomId}`);
+        const response = await fetch(
+          `https://pokeapi.co/api/v2/pokemon/${randomId}`
+        );
         const data = await response.json();
-        
-        const totalStats = data.stats.reduce((sum, stat) => sum + stat.base_stat, 0);
+
+        const totalStats = data.stats.reduce(
+          (sum, stat) => sum + stat.base_stat,
+          0
+        );
         const { min, max } = baseStats[powerLevel];
-        
+
         if (totalStats >= min && totalStats <= max) {
           pokemon.push(data);
         }
       } catch (error) {
-        console.error('Error fetching Pokemon:', error);
+        console.error("Error fetching Pokemon:", error);
       }
     }
     return pokemon;
@@ -164,12 +175,10 @@ export const BattleProvider = ({ children }) => {
     battleData,
     updateBattleData,
     generateOpponentTeam,
-    replaceOpponentPokemon
+    replaceOpponentPokemon,
   };
 
   return (
-    <BattleContext.Provider value={value}>
-      {children}
-    </BattleContext.Provider>
+    <BattleContext.Provider value={value}>{children}</BattleContext.Provider>
   );
-}; 
+};
