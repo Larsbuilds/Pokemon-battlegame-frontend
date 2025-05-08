@@ -11,6 +11,7 @@ import RosterPage from "./pages/RosterPage";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { RosterProvider } from "./context/RosterContext";
 import { BattleProvider } from "./context/BattleContext";
+import Battle from "./pages/Battle";
 
 function App() {
   return (
@@ -43,6 +44,13 @@ function App() {
                       >
                         My Roster
                       </Link>
+
+                      <Link
+                        to="/battle"
+                        className="hover:text-pokemon-yellow transition-colors"
+                      >
+                        Battle
+                      </Link>
                     </nav>
                   </div>
                 </div>
@@ -52,6 +60,7 @@ function App() {
                   <Route path="/" element={<Home />} />
                   <Route path="/pokemon/:name" element={<Detail />} />
                   <Route path="/roster" element={<RosterPage />} />
+                  <Route path="/battle" element={<Battle />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </main>
