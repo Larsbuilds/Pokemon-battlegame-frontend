@@ -53,7 +53,15 @@ const RosterPage = () => {
 
     // Copy roster to battle context
     roster.forEach(pokemon => {
-      addPlayerPokemon(pokemon);
+      // Format stats to match the expected structure
+      const formattedPokemon = {
+        ...pokemon,
+        stats: pokemon.stats.map(stat => ({
+          stat: { name: stat.name },
+          base_stat: stat.value
+        }))
+      };
+      addPlayerPokemon(formattedPokemon);
     });
 
     // Copy opponent team from roster page to battle context
