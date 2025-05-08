@@ -292,7 +292,7 @@ const RosterPage = () => {
         <div style={opponentSectionStyle}>
           <h2 style={{ ...titleStyle, color: '#D32F2F' }}>Opponent Team</h2>
           <div style={cardsContainerStyle}>
-            {opponentPokemon.map((pokemon, index) => (
+            {opponentPokemon.slice(0, MAX_ROSTER_SIZE).map((pokemon, index) => (
               <div key={`opponent-${index}-${pokemon.id}`} style={cardWrapperStyle}>
                 <div style={cardStyle}>
                   <PokemonRosterCard
@@ -310,6 +310,26 @@ const RosterPage = () => {
                     isDragging={false}
                     isOpponent={true}
                   />
+                </div>
+              </div>
+            ))}
+            {/* Empty slots for opponent team */}
+            {Array.from({ length: MAX_ROSTER_SIZE - opponentPokemon.length }).map((_, index) => (
+              <div key={`opponent-empty-${index}`} style={cardWrapperStyle}>
+                <div style={{
+                  ...emptySlotStyle,
+                  border: '2px dashed #F44336',
+                  color: '#F44336',
+                  backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                }}>
+                  <span style={{
+                    ...plusTextStyle,
+                    color: '#F44336',
+                  }}>?</span>
+                  <span style={{
+                    ...plusLabelStyle,
+                    color: '#D32F2F',
+                  }}>Opponent</span>
                 </div>
               </div>
             ))}
