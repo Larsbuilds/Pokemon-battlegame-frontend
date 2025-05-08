@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useRoster } from './RosterContext';
 
 const BattleContext = createContext();
 
@@ -11,6 +12,7 @@ export const useBattle = () => {
 };
 
 export const BattleProvider = ({ children }) => {
+  const { MAX_ROSTER_SIZE } = useRoster();
   const [opponentPokemon, setOpponentPokemon] = useState([]);
   const [playerPokemon, setPlayerPokemon] = useState([]);
   const [battleData, setBattleData] = useState({});
@@ -45,10 +47,8 @@ export const BattleProvider = ({ children }) => {
           stats: data.stats,
           moves: data.moves?.slice(0, 4), // Only store first 4 moves
           abilities: data.abilities,
-          sprites: {
-            front_default: data.images?.front_default,
-            back_default: data.images?.back_default,
-          }
+          sprites: data.images,
+          currHP: data.currHP
         };
         return acc;
       }, {});
@@ -80,14 +80,19 @@ export const BattleProvider = ({ children }) => {
   };
 
   const addPlayerPokemon = (pokemon) => {
-    if (playerPokemon.length < 6) {
-      setPlayerPokemon(prev => [...prev, pokemon]);
+    if (playerPokemon.length < MAX_ROSTER_SIZE) {
+      const pokemonWithHP = {
+        ...pokemon,
+        currHP: pokemon.stats.find(stat => stat.stat.name === 'hp')?.base_stat || 0
+      };
+      setPlayerPokemon(prev => [...prev, pokemonWithHP]);
       // Update battle data for the new Pokemon
       updateBattleData(pokemon.id, {
         images: pokemon.sprites,
         sounds: pokemon.cries,
         stats: pokemon.stats,
-        moves: pokemon.moves
+        moves: pokemon.moves,
+        currHP: pokemonWithHP.currHP
       });
     }
   };
@@ -97,9 +102,13 @@ export const BattleProvider = ({ children }) => {
   };
 
   const updatePlayerPokemon = (index, updatedPokemon) => {
+    const pokemonWithHP = {
+      ...updatedPokemon,
+      currHP: updatedPokemon.currHP || updatedPokemon.stats.find(stat => stat.stat.name === 'hp')?.base_stat || 0
+    };
     setPlayerPokemon(prev => {
       const newTeam = [...prev];
-      newTeam[index] = updatedPokemon;
+      newTeam[index] = pokemonWithHP;
       return newTeam;
     });
     // Update battle data for the updated Pokemon
@@ -107,8 +116,19 @@ export const BattleProvider = ({ children }) => {
       images: updatedPokemon.sprites,
       sounds: updatedPokemon.cries,
       stats: updatedPokemon.stats,
-      moves: updatedPokemon.moves
+      moves: updatedPokemon.moves,
+      currHP: pokemonWithHP.currHP
     });
+  };
+
+  const updatePokemonHP = (pokemonId, newHP) => {
+    setBattleData(prev => ({
+      ...prev,
+      [pokemonId]: {
+        ...prev[pokemonId],
+        currHP: newHP
+      }
+    }));
   };
 
   const getPowerLevel = (totalStats) => {
@@ -126,16 +146,21 @@ export const BattleProvider = ({ children }) => {
 
       const newPokemon = await fetchRandomPokemon(1, currentPowerLevel);
       if (newPokemon.length > 0) {
+        const pokemonWithHP = {
+          ...newPokemon[0],
+          currHP: newPokemon[0].stats.find(stat => stat.stat.name === 'hp')?.base_stat || 0
+        };
         const updatedTeam = [...opponentPokemon];
-        updatedTeam[index] = newPokemon[0];
+        updatedTeam[index] = pokemonWithHP;
         setOpponentPokemon(updatedTeam);
 
         // Update battle data for the new Pokemon
-        updateBattleData(newPokemon[0].id, {
-          images: newPokemon[0].sprites,
-          sounds: newPokemon[0].cries,
-          stats: newPokemon[0].stats,
-          moves: newPokemon[0].moves
+        updateBattleData(pokemonWithHP.id, {
+          images: pokemonWithHP.sprites,
+          sounds: pokemonWithHP.cries,
+          stats: pokemonWithHP.stats,
+          moves: pokemonWithHP.moves,
+          currHP: pokemonWithHP.currHP
         });
       }
     } catch (error) {
@@ -151,7 +176,13 @@ export const BattleProvider = ({ children }) => {
         const mediumPokemon = await fetchRandomPokemon(2, 'medium');
         const weakPokemon = await fetchRandomPokemon(2, 'weak');
 
-        const team = [...strongPokemon, ...mediumPokemon, ...weakPokemon];
+        const team = [...strongPokemon, ...mediumPokemon, ...weakPokemon]
+          .map(pokemon => ({
+            ...pokemon,
+            currHP: pokemon.stats.find(stat => stat.stat.name === 'hp')?.base_stat || 0
+          }))
+          .slice(0, MAX_ROSTER_SIZE); // Ensure we don't exceed MAX_ROSTER_SIZE
+
         setOpponentPokemon(team);
 
         // Store battle data for each opponent Pokemon
@@ -160,7 +191,8 @@ export const BattleProvider = ({ children }) => {
             images: pokemon.sprites,
             sounds: pokemon.cries,
             stats: pokemon.stats,
-            moves: pokemon.moves
+            moves: pokemon.moves,
+            currHP: pokemon.currHP
           });
         });
       } catch (error) {
@@ -206,7 +238,8 @@ export const BattleProvider = ({ children }) => {
     replaceOpponentPokemon,
     addPlayerPokemon,
     removePlayerPokemon,
-    updatePlayerPokemon
+    updatePlayerPokemon,
+    updatePokemonHP
   };
 
   return (
