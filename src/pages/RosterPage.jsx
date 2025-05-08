@@ -187,7 +187,7 @@ const RosterPage = () => {
   };
 
   const battleButtonStyle = {
-    backgroundColor: roster.length === MAX_ROSTER_SIZE ? '#27ae60' : '#b2dfdb', // Aggressive green when enabled, muted green when disabled
+    backgroundColor: roster.length === MAX_ROSTER_SIZE ? '#27ae60' : '#b2dfdb',
     color: 'white',
     padding: '1.2rem 2.2rem',
     borderRadius: '12px',
@@ -197,9 +197,6 @@ const RosterPage = () => {
     letterSpacing: '0.05em',
     cursor: roster.length === MAX_ROSTER_SIZE ? 'pointer' : 'not-allowed',
     transition: 'all 0.3s',
-    boxShadow: roster.length === MAX_ROSTER_SIZE
-      ? '0 0 32px 8px #27ae60, 0 4px 12px rgba(0,0,0,0.18)'
-      : '0 2px 8px rgba(0,0,0,0.08)',
     whiteSpace: 'nowrap',
     pointerEvents: 'auto',
     transform: 'none',
@@ -281,6 +278,11 @@ const RosterPage = () => {
             onClick={handleBattle}
             style={battleButtonStyle}
             disabled={roster.length !== MAX_ROSTER_SIZE}
+            className={`transition-all duration-300 shadow-md ${
+              roster.length === MAX_ROSTER_SIZE 
+                ? 'hover:shadow-[0_0_32px_8px_#27ae60]' 
+                : ''
+            }`}
           >
             Battle!
           </button>
