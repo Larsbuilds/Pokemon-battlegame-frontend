@@ -12,19 +12,24 @@ export const useBattle = () => {
 
 export const BattleProvider = ({ children }) => {
   const [opponentPokemon, setOpponentPokemon] = useState([]);
+  const [playerPokemon, setPlayerPokemon] = useState([]);
   const [battleData, setBattleData] = useState({});
 
-  // Load battle data and opponent team from localStorage on initial render
+  // Load battle data and teams from localStorage on initial render
   useEffect(() => {
     try {
       const savedBattleData = localStorage.getItem('pokemonBattleData');
       const savedOpponentTeam = localStorage.getItem('opponentTeam');
+      const savedPlayerTeam = localStorage.getItem('playerTeam');
       
       if (savedBattleData) {
         setBattleData(JSON.parse(savedBattleData));
       }
       if (savedOpponentTeam) {
         setOpponentPokemon(JSON.parse(savedOpponentTeam));
+      }
+      if (savedPlayerTeam) {
+        setPlayerPokemon(JSON.parse(savedPlayerTeam));
       }
     } catch (error) {
       console.error('Error loading battle data:', error);
@@ -54,14 +59,15 @@ export const BattleProvider = ({ children }) => {
     }
   }, [battleData]);
 
-  // Save opponent team to localStorage
+  // Save teams to localStorage
   useEffect(() => {
     try {
       localStorage.setItem('opponentTeam', JSON.stringify(opponentPokemon));
+      localStorage.setItem('playerTeam', JSON.stringify(playerPokemon));
     } catch (error) {
-      console.error('Error saving opponent team:', error);
+      console.error('Error saving teams:', error);
     }
-  }, [opponentPokemon]);
+  }, [opponentPokemon, playerPokemon]);
 
   const updateBattleData = (pokemonId, data) => {
     setBattleData(prev => ({
@@ -71,6 +77,38 @@ export const BattleProvider = ({ children }) => {
         ...data
       }
     }));
+  };
+
+  const addPlayerPokemon = (pokemon) => {
+    if (playerPokemon.length < 6) {
+      setPlayerPokemon(prev => [...prev, pokemon]);
+      // Update battle data for the new Pokemon
+      updateBattleData(pokemon.id, {
+        images: pokemon.sprites,
+        sounds: pokemon.cries,
+        stats: pokemon.stats,
+        moves: pokemon.moves
+      });
+    }
+  };
+
+  const removePlayerPokemon = (index) => {
+    setPlayerPokemon(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updatePlayerPokemon = (index, updatedPokemon) => {
+    setPlayerPokemon(prev => {
+      const newTeam = [...prev];
+      newTeam[index] = updatedPokemon;
+      return newTeam;
+    });
+    // Update battle data for the updated Pokemon
+    updateBattleData(updatedPokemon.id, {
+      images: updatedPokemon.sprites,
+      sounds: updatedPokemon.cries,
+      stats: updatedPokemon.stats,
+      moves: updatedPokemon.moves
+    });
   };
 
   const getPowerLevel = (totalStats) => {
@@ -161,10 +199,14 @@ export const BattleProvider = ({ children }) => {
 
   const value = {
     opponentPokemon,
+    playerPokemon,
     battleData,
     updateBattleData,
     generateOpponentTeam,
-    replaceOpponentPokemon
+    replaceOpponentPokemon,
+    addPlayerPokemon,
+    removePlayerPokemon,
+    updatePlayerPokemon
   };
 
   return (

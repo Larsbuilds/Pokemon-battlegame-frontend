@@ -45,7 +45,8 @@ const PokemonCard = ({ name }) => {
         id: pokemon.id,
         name: pokemon.name,
         sprite: pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default,
-        types: pokemon.types.map(t => t.type.name)
+        types: pokemon.types.map(t => t.type.name),
+        stats: pokemon.stats.map(stat => ({ name: stat.stat.name, value: stat.base_stat }))
       }
       await addToRoster(pokemonData)
     } catch (error) {

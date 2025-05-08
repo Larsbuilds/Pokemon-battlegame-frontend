@@ -2,11 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useRoster } from '../context/RosterContext';
 import { useBattle } from '../context/BattleContext';
 import PokemonRosterCard from '../components/PokemonRosterCard';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const RosterPage = () => {
   const { roster, removeFromRoster, MAX_ROSTER_SIZE } = useRoster();
-  const { opponentPokemon, generateOpponentTeam, replaceOpponentPokemon } = useBattle();
+  const { 
+    opponentPokemon, 
+    generateOpponentTeam, 
+    replaceOpponentPokemon,
+    addPlayerPokemon,
+    playerPokemon,
+    removePlayerPokemon,
+    updateBattleData
+  } = useBattle();
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
@@ -32,6 +40,32 @@ const RosterPage = () => {
       setError('You need 6 Pokemon in your roster to start a battle!');
       return;
     }
+
+    // Clear existing player Pokemon in battle context
+    playerPokemon.forEach((_, index) => {
+      removePlayerPokemon(index);
+    });
+
+    // Clear existing opponent Pokemon in battle context
+    opponentPokemon.forEach((_, index) => {
+      replaceOpponentPokemon(index);
+    });
+
+    // Copy roster to battle context
+    roster.forEach(pokemon => {
+      addPlayerPokemon(pokemon);
+    });
+
+    // Copy opponent team from roster page to battle context
+    opponentPokemon.forEach(pokemon => {
+      updateBattleData(pokemon.id, {
+        images: pokemon.sprites,
+        sounds: pokemon.cries,
+        stats: pokemon.stats,
+        moves: pokemon.moves
+      });
+    });
+
     navigate('/battle');
   };
 
@@ -70,7 +104,7 @@ const RosterPage = () => {
   const cardWrapperStyle = {
     position: 'relative',
     width: '100%',
-    paddingTop: '100%', // Creates a square aspect ratio
+    paddingTop: '130%', // Increased for more height for stats
   };
 
   const cardStyle = {
@@ -79,12 +113,9 @@ const RosterPage = () => {
     left: 0,
     width: '100%',
     height: '100%',
-    transform: 'scale(0.95)', // Slightly smaller to create overlap effect
+    transform: 'scale(0.95)',
     transition: 'transform 0.2s ease-in-out',
-    '&:hover': {
-      transform: 'scale(1)',
-      zIndex: 1,
-    },
+    overflow: 'visible',
   };
 
   const titleStyle = {
@@ -103,10 +134,6 @@ const RosterPage = () => {
     maxWidth: '1600px',
     margin: '0 auto',
     height: 'calc(100vh - 100px)', // Adjust based on your header/navigation height
-    '@media (max-width: 1200px)': {
-      flexDirection: 'column',
-      height: 'auto',
-    },
   };
 
   const emptySlotStyle = {
@@ -119,7 +146,31 @@ const RosterPage = () => {
     justifyContent: 'center',
     color: '#2196F3',
     backgroundColor: 'rgba(33, 150, 243, 0.1)',
+    fontSize: '2.5rem',
+    flexDirection: 'column',
+    cursor: 'pointer',
+    transition: 'background 0.2s, box-shadow 0.2s, transform 0.2s',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    padding: '0.75rem',
+    boxSizing: 'border-box',
+  };
+
+  const plusTextStyle = {
+    fontSize: '2.5rem',
+    fontWeight: 'bold',
+    marginBottom: '0.2rem',
+    lineHeight: 1,
+    color: '#2196F3',
+    userSelect: 'none',
+  };
+
+  const plusLabelStyle = {
     fontSize: '0.9rem',
+    color: '#1976D2',
+    marginTop: '0.2rem',
+    userSelect: 'none',
   };
 
   const battleButtonContainerStyle = {
@@ -132,28 +183,34 @@ const RosterPage = () => {
     top: '50%',
     transform: 'translate(-50%, -50%)',
     zIndex: 10,
-    pointerEvents: 'none', // allow click-through except for button
+    pointerEvents: 'none',
   };
 
   const battleButtonStyle = {
-    backgroundColor: roster.length === MAX_ROSTER_SIZE ? '#2196F3' : '#ccc',
+    backgroundColor: roster.length === MAX_ROSTER_SIZE ? '#27ae60' : '#b2dfdb', // Aggressive green when enabled, muted green when disabled
     color: 'white',
     padding: '1.2rem 2.2rem',
-    borderRadius: '8px',
+    borderRadius: '12px',
     border: 'none',
-    fontSize: '1.2rem',
+    fontSize: '1.3rem',
+    fontWeight: 'bold',
+    letterSpacing: '0.05em',
     cursor: roster.length === MAX_ROSTER_SIZE ? 'pointer' : 'not-allowed',
     transition: 'all 0.3s',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.18)',
-    transform: 'rotate(90deg)',
+    boxShadow: roster.length === MAX_ROSTER_SIZE
+      ? '0 0 32px 8px #27ae60, 0 4px 12px rgba(0,0,0,0.18)'
+      : '0 2px 8px rgba(0,0,0,0.08)',
     whiteSpace: 'nowrap',
-    pointerEvents: 'auto', // allow button to be clickable
+    pointerEvents: 'auto',
+    transform: 'none',
+    outline: roster.length === MAX_ROSTER_SIZE ? '3px solid #145a32' : 'none',
+    textShadow: roster.length === MAX_ROSTER_SIZE ? '0 2px 8px #145a32' : 'none',
   };
 
   // Helper to ensure stats are always present and formatted
   const getStats = (pokemon) => {
     if (pokemon.stats && Array.isArray(pokemon.stats)) {
-      // Already in correct format
+      // If stats are already in correct format
       if (pokemon.stats.length && typeof pokemon.stats[0] === 'object' && 'name' in pokemon.stats[0]) {
         return pokemon.stats;
       }
@@ -181,13 +238,13 @@ const RosterPage = () => {
         </div>
       )}
 
-      <div style={containerStyle}>
+      <div style={containerStyle} className="flex flex-col lg:flex-row gap-8 p-4 max-w-[1600px] mx-auto h-auto lg:h-[calc(100vh-100px)]">
         {/* My Roster Section */}
         <div style={rosterSectionStyle}>
           <h1 style={{ ...titleStyle, color: '#1976D2' }}>My Roster</h1>
           <div style={cardsContainerStyle}>
             {roster.map((pokemon) => (
-              <div key={pokemon.id} style={cardWrapperStyle}>
+              <div key={`roster-${pokemon.id}`} style={cardWrapperStyle}>
                 <div style={cardStyle}>
                   <PokemonRosterCard
                     pokemon={{
@@ -199,23 +256,26 @@ const RosterPage = () => {
                     }}
                     onRemove={handleRemove}
                     isDragging={false}
+                    isOpponent={false}
                   />
                 </div>
               </div>
             ))}
-            
             {/* Empty slots */}
             {Array.from({ length: MAX_ROSTER_SIZE - roster.length }).map((_, index) => (
               <div key={`empty-${index}`} style={cardWrapperStyle}>
-                <div style={emptySlotStyle}>
-                  Empty Slot
-                </div>
+                <Link to="/" style={{ textDecoration: 'none', display: 'block', width: '100%', height: '100%' }}>
+                  <div style={emptySlotStyle} title="Add a Pokémon">
+                    <span style={plusTextStyle}>+</span>
+                    <span style={plusLabelStyle}>Add Pokémon</span>
+                  </div>
+                </Link>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Battle Button - now absolutely centered and rotated */}
+        {/* Battle Button - now absolutely centered and normal orientation */}
         <div style={battleButtonContainerStyle}>
           <button
             onClick={handleBattle}
@@ -231,7 +291,7 @@ const RosterPage = () => {
           <h2 style={{ ...titleStyle, color: '#D32F2F' }}>Opponent Team</h2>
           <div style={cardsContainerStyle}>
             {opponentPokemon.map((pokemon, index) => (
-              <div key={pokemon.id} style={cardWrapperStyle}>
+              <div key={`opponent-${index}-${pokemon.id}`} style={cardWrapperStyle}>
                 <div style={cardStyle}>
                   <PokemonRosterCard
                     pokemon={{

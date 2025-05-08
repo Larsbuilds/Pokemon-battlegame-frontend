@@ -1,13 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
 const PokemonRosterCard = ({ pokemon, onRemove, isDragging, isOpponent = false }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  // Detect touch device
+  const isTouchDevice = typeof window !== 'undefined' && (
+    'ontouchstart' in window || navigator.maxTouchPoints > 0
+  );
+
+  // Dynamic shadow and scale based on card type and interaction
+  const [hovered, setHovered] = useState(false);
+  let boxShadow = isDragging
+    ? '0 4px 16px rgba(0,0,0,0.25)'
+    : isOpponent
+      ? hovered ? '0 0 16px 4px #F44336' : '0 2px 4px rgba(0,0,0,0.1)'
+      : hovered ? '0 0 16px 4px #2196F3' : '0 2px 4px rgba(0,0,0,0.1)';
+  let scale = hovered ? 1.05 : 1;
+
   const cardStyle = {
     width: '100%',
     height: '100%',
     backgroundColor: 'white',
     borderRadius: '8px',
-    boxShadow: isDragging ? '0 4px 8px rgba(0,0,0,0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
+    boxShadow,
     padding: '0.75rem',
     display: 'flex',
     flexDirection: 'column',
@@ -16,6 +32,7 @@ const PokemonRosterCard = ({ pokemon, onRemove, isDragging, isOpponent = false }
     transition: 'transform 0.2s, box-shadow 0.2s',
     cursor: 'pointer',
     overflow: 'hidden',
+    transform: `scale(${scale})`,
   };
 
   const imageStyle = {
@@ -72,6 +89,8 @@ const PokemonRosterCard = ({ pokemon, onRemove, isDragging, isOpponent = false }
     width: '100%',
     marginTop: '0.25rem',
     fontSize: '0.7rem',
+    transition: 'max-height 0.2s',
+    overflow: 'hidden',
   };
 
   const statRowStyle = {
@@ -104,8 +123,34 @@ const PokemonRosterCard = ({ pokemon, onRemove, isDragging, isOpponent = false }
     return colors[type] || '#777';
   };
 
+  // Only show HP and Attack by default
+  const defaultStats = pokemon.stats
+    ? pokemon.stats.filter(stat => stat.name === 'hp' || stat.name === 'attack')
+    : [];
+  const allStats = pokemon.stats || [];
+
+  // Handlers for hover/click expand
+  const handleMouseEnter = () => {
+    setHovered(true);
+    if (!isTouchDevice) setExpanded(true);
+  };
+  const handleMouseLeave = () => {
+    setHovered(false);
+    if (!isTouchDevice) setExpanded(false);
+  };
+  const handleClick = () => {
+    if (isTouchDevice) setExpanded(e => !e);
+  };
+
   return (
-    <div style={cardStyle}>
+    <div
+      style={cardStyle}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
+      tabIndex={0}
+      aria-expanded={expanded}
+    >
       {onRemove && (
         <button
           onClick={(e) => {
@@ -131,16 +176,21 @@ const PokemonRosterCard = ({ pokemon, onRemove, isDragging, isOpponent = false }
           </span>
         ))}
       </div>
-      {pokemon.stats && (
-        <div style={statsStyle}>
-          {pokemon.stats.map((stat) => (
-            <div key={stat.name} style={statRowStyle}>
-              <span>{stat.name}:</span>
-              <span>{stat.value}</span>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Stats: show only HP and Attack by default, all on expand */}
+      <div style={statsStyle}>
+        {(expanded ? allStats : defaultStats).map((stat) => (
+          <div key={stat.name} style={statRowStyle}>
+            <span>{stat.name}:</span>
+            <span>{stat.value}</span>
+          </div>
+        ))}
+        {/* Show expand/collapse hint on mobile */}
+        {isTouchDevice && (
+          <div style={{ textAlign: 'center', fontSize: '0.7rem', color: '#888' }}>
+            {expanded ? 'Tap to collapse' : 'Tap to show all stats'}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
