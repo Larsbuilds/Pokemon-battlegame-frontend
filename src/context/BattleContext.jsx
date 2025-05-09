@@ -535,6 +535,8 @@ export const BattleProvider = ({ children }) => {
     clearTeams,
     setPlayerTeam,
     setOpponentTeam,
+    setPlayerPokemon,
+    setOpponentPokemon,
   };
 
   return (

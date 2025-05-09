@@ -6,9 +6,16 @@ import ActionButtons from "./ActionButtons";
 import { useBattle } from "../../context/BattleContext";
 import ActivePokemon from "./ActivePokemon";
 import HealthBar from "./HealthBar";
+import { startBattle } from "../../../utils/battleLogic";
 
 const Battlescreen = () => {
-  const { opponentPokemon, battleData, playerPokemon } = useBattle();
+  const {
+    opponentPokemon,
+    battleData,
+    playerPokemon,
+    setPlayerPokemon,
+    setOpponentPokemon,
+  } = useBattle();
 
   const [playerActivePokemon, setPlayerActivePokemon] = useState(null);
   const [oppActivePokemon, setOppActivePokemon] = useState(null);
@@ -94,10 +101,18 @@ const Battlescreen = () => {
         <Arena />
         <ActionButtons
           switchPokemon={switchPokemon}
-          // oppActivePokemon={oppActivePokemon}
-          // setOppActivePokemon={setOppActivePokemon}
-          // playerActivePokemon={playerActivePokemon}
-          // setPlayerActivePokemon={setPlayerActivePokemon}
+          oppActivePokemon={oppActivePokemon}
+          playerActivePokemon={playerActivePokemon}
+          startBattle={() =>
+            startBattle({
+              playerActivePokemon,
+              setPlayerActivePokemon,
+              setPlayerPokemon,
+              oppActivePokemon,
+              setOppActivePokemon,
+              setOpponentPokemon,
+            })
+          }
         />
       </div>
     </div>

@@ -1,5 +1,6 @@
 import gP1 from "../../assets/p1.png";
 import gP2 from "../../assets/p2.png";
+import { useEffect } from "react";
 
 const PlayerOverview = ({
   player,
@@ -15,6 +16,10 @@ const PlayerOverview = ({
     return isActive ? "bg-red-400 rounded-full" : "";
   };
 
+  const markDeadPokemon = (e) => {
+    return e.currHP <= 0 ? "opacity-25" : "";
+  };
+
   console.log(pokemon);
   return (
     <div className="relative -top-8">
@@ -28,7 +33,9 @@ const PlayerOverview = ({
           {pokemon?.map((e, index) => (
             <div key={`${e.id}-${index}`} className="">
               <img
-                className={`w-[55px] mx-auto  ${markActivePokemon(e)}`}
+                className={`w-[55px] mx-auto  ${markActivePokemon(
+                  e
+                )} ${markDeadPokemon(e)}`}
                 src={e.sprites?.other?.[`official-artwork`].front_default}
                 alt={e.name}
               />
