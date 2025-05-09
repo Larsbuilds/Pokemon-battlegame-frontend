@@ -12,6 +12,7 @@ const Battlescreen = () => {
 
   const [playerActivePokemon, setPlayerActivePokemon] = useState(null);
   const [oppActivePokemon, setOppActivePokemon] = useState(null);
+  const [showMsg, setShowMsg] = useState(false);
 
   const switchPokemon = () => {
     const currIndex = playerPokemon.findIndex(
@@ -22,6 +23,17 @@ const Battlescreen = () => {
     setPlayerActivePokemon(playerPokemon[nextIndex]);
     console.log("Next Pokemon Nr", nextIndex);
   };
+
+  useEffect(() => {
+    if (playerActivePokemon) {
+      setShowMsg(true);
+      const timer = setTimeout(() => {
+        setShowMsg(false);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [playerActivePokemon]);
 
   useEffect(() => {
     if (playerPokemon?.length > 0) {
@@ -43,8 +55,16 @@ const Battlescreen = () => {
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
-        className=" h-full w-full flex flex-col justify-center items-center"
+        className=" h-full w-full flex flex-col justify-center items-center relative"
       >
+        {showMsg && (
+          <div
+            key={playerActivePokemon?.id}
+            className="absolute -translate-y-1/2 bg-white rounded-md p-2 font-bold animate-riseFade z-[9999] shadow-xl"
+          >
+            <p>Go, {playerActivePokemon?.name.toUpperCase()} !!!</p>
+          </div>
+        )}
         <div className="z-50 absolute w-[1120px] flex items-center justify-between px-8">
           <PlayerOverview
             player={1}
@@ -53,7 +73,7 @@ const Battlescreen = () => {
             oppActivePokemon={oppActivePokemon}
           />
           <div className="flex-1 flex justify-center">
-            <div className="flex flex-col h-[65vh]">
+            <div className="flex flex-col h-[65vh] relative">
               <HealthBar
                 playerPkmn={playerActivePokemon}
                 oppPkmn={oppActivePokemon}
