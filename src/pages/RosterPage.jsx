@@ -225,21 +225,6 @@ const RosterPage = () => {
     textShadow: roster.length === MAX_ROSTER_SIZE ? '0 2px 8px #145a32' : 'none',
   };
 
-  // Helper to ensure stats are always present and formatted
-  const getStats = (pokemon) => {
-    if (pokemon.stats && Array.isArray(pokemon.stats)) {
-      // If stats are already in correct format
-      if (pokemon.stats.length && typeof pokemon.stats[0] === 'object' && 'name' in pokemon.stats[0]) {
-        return pokemon.stats;
-      }
-      // If stats are just numbers, map them
-      const statNames = ['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed'];
-      return pokemon.stats.map((value, i) => ({ name: statNames[i] || `stat${i+1}`, value }));
-    }
-    // Fallback: no stats
-    return [];
-  };
-
   return (
     <div className="roster-page" style={{ position: 'relative', minHeight: '100vh' }}>
       {showNamePopup && (
@@ -354,9 +339,12 @@ const RosterPage = () => {
                     pokemon={{
                       id: pokemon.id,
                       name: pokemon.name,
-                      sprite: pokemon.sprite,
+                      sprite: pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default,
                       types: pokemon.types,
-                      stats: getStats(pokemon)
+                      stats: pokemon.stats.map(stat => ({
+                        name: stat.stat.name,
+                        value: stat.base_stat
+                      }))
                     }}
                     onRemove={handleRemove}
                     isDragging={false}
@@ -407,7 +395,7 @@ const RosterPage = () => {
                       id: pokemon.id,
                       name: pokemon.name,
                       sprite: pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default,
-                      types: pokemon.types.map(t => t.type.name),
+                      types: pokemon.types,
                       stats: pokemon.stats.map(stat => ({
                         name: stat.stat.name,
                         value: stat.base_stat
