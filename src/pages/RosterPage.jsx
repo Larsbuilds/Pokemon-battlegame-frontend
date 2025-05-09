@@ -11,16 +11,17 @@ const RosterPage = () => {
     opponentPokemon, 
     generateOpponentTeam, 
     replaceOpponentPokemon,
-    addPlayerPokemon,
-    playerPokemon,
-    removePlayerPokemon,
     updateBattleData,
     playerName,
-    setPlayerNameAndSave
+    setPlayerNameAndSave,
+    addPlayerPokemon,
+    clearTeams
   } = useBattle();
   const [error, setError] = useState(null);
   const [showNamePopup, setShowNamePopup] = useState(false);
   const navigate = useNavigate();
+  const [battleReady, setBattleReady] = useState(false);
+  const [pokemonAdded, setPokemonAdded] = useState(0);
 
   useEffect(() => {
     generateOpponentTeam();
@@ -29,6 +30,12 @@ const RosterPage = () => {
       setShowNamePopup(true);
     }
   }, [generateOpponentTeam, playerName]);
+
+  useEffect(() => {
+    if (battleReady && pokemonAdded === MAX_ROSTER_SIZE) {
+      navigate('/battle');
+    }
+  }, [battleReady, pokemonAdded, MAX_ROSTER_SIZE, navigate]);
 
   const handleNameSubmit = (name) => {
     setPlayerNameAndSave(name);
@@ -48,34 +55,64 @@ const RosterPage = () => {
     replaceOpponentPokemon(index);
   };
 
-  const handleBattle = () => {
+  const handleBattle = async () => {
     if (roster.length !== MAX_ROSTER_SIZE) {
       setError('You need 6 Pokemon in your roster to start a battle!');
       return;
     }
 
-    // Clear existing player Pokemon in battle context
-    playerPokemon.forEach((_, index) => {
-      removePlayerPokemon(index);
-    });
+    // Debug: Log roster data before battle
+    console.log('Roster Pokemon before battle:', roster);
 
-    // Clear existing opponent Pokemon in battle context
-    opponentPokemon.forEach((_, index) => {
-      replaceOpponentPokemon(index);
-    });
+    // Reset Pokemon added counter
+    setPokemonAdded(0);
 
-    // Copy roster to battle context
-    roster.forEach(pokemon => {
-      // Format stats to match the expected structure
-      const formattedPokemon = {
-        ...pokemon,
-        stats: pokemon.stats.map(stat => ({
-          stat: { name: stat.name },
-          base_stat: stat.value
-        }))
-      };
-      addPlayerPokemon(formattedPokemon);
-    });
+    // Create an array to hold all formatted Pokemon
+    const formattedPokemon = roster.map(pokemon => ({
+      id: pokemon.id,
+      name: pokemon.name,
+      sprites: {
+        front_default: pokemon.sprite,
+        other: {
+          'official-artwork': {
+            front_default: pokemon.sprite
+          }
+        }
+      },
+      cries: {
+        latest: pokemon.cries?.latest || '',
+        legacy: pokemon.cries?.legacy || ''
+      },
+      types: pokemon.types.map(type => ({
+        type: {
+          name: typeof type === 'string' ? type : type.type.name
+        }
+      })),
+      stats: pokemon.stats.map(stat => ({
+        stat: {
+          name: stat.name
+        },
+        base_stat: stat.value
+      })),
+      moves: pokemon.moves || [],
+      abilities: pokemon.abilities || [],
+      currHP: pokemon.stats.find(stat => stat.name === 'hp')?.value || 0
+    }));
+
+    console.log('Formatted Pokemon array:', formattedPokemon);
+
+    // Clear existing Pokemon in battle context
+    clearTeams();
+
+    // Wait for state to clear
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    // Add each Pokemon to the battle context
+    for (const pokemon of formattedPokemon) {
+      console.log('Adding Pokemon to battle:', pokemon);
+      addPlayerPokemon(pokemon);
+      setPokemonAdded(prev => prev + 1);
+    }
 
     // Copy opponent team from roster page to battle context
     opponentPokemon.forEach(pokemon => {
@@ -87,7 +124,12 @@ const RosterPage = () => {
       });
     });
 
-    navigate('/battle');
+    // Check localStorage after adding Pokemon
+    const savedPlayerTeam = localStorage.getItem('playerTeam');
+    console.log('Saved player team in localStorage:', savedPlayerTeam ? JSON.parse(savedPlayerTeam) : null);
+
+    // Set battle ready flag
+    setBattleReady(true);
   };
 
   const sectionStyle = {
@@ -339,11 +381,15 @@ const RosterPage = () => {
                     pokemon={{
                       id: pokemon.id,
                       name: pokemon.name,
-                      sprite: pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default,
-                      types: pokemon.types,
+                      sprite: pokemon.sprites?.other?.['official-artwork']?.front_default || 
+                             pokemon.sprites?.front_default || 
+                             pokemon.sprite,
+                      types: Array.isArray(pokemon.types) 
+                        ? pokemon.types.map(type => typeof type === 'string' ? type : type.type.name)
+                        : [],
                       stats: pokemon.stats.map(stat => ({
-                        name: stat.stat.name,
-                        value: stat.base_stat
+                        name: stat.stat?.name || stat.name,
+                        value: stat.base_stat || stat.value
                       }))
                     }}
                     onRemove={handleRemove}
@@ -394,11 +440,15 @@ const RosterPage = () => {
                     pokemon={{
                       id: pokemon.id,
                       name: pokemon.name,
-                      sprite: pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default,
-                      types: pokemon.types,
+                      sprite: pokemon.sprites?.other?.['official-artwork']?.front_default || 
+                             pokemon.sprites?.front_default || 
+                             pokemon.sprite,
+                      types: Array.isArray(pokemon.types) 
+                        ? pokemon.types.map(type => typeof type === 'string' ? type : type.type.name)
+                        : [],
                       stats: pokemon.stats.map(stat => ({
-                        name: stat.stat.name,
-                        value: stat.base_stat
+                        name: stat.stat?.name || stat.name,
+                        value: stat.base_stat || stat.value
                       }))
                     }}
                     onRemove={() => handleOpponentRemove(index)}

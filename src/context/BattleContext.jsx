@@ -75,12 +75,26 @@ export const BattleProvider = ({ children }) => {
   // Save teams to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('opponentTeam', JSON.stringify(opponentPokemon));
-      localStorage.setItem('playerTeam', JSON.stringify(playerPokemon));
+      console.log('Saving to localStorage - playerPokemon:', playerPokemon);
+      console.log('Saving to localStorage - opponentPokemon:', opponentPokemon);
+      
+      if (playerPokemon.length > 0) {
+        localStorage.setItem('playerTeam', JSON.stringify(playerPokemon));
+        // Verify the save
+        const saved = localStorage.getItem('playerTeam');
+        console.log('Verified saved playerTeam:', saved ? JSON.parse(saved) : null);
+      }
+      
+      if (opponentPokemon.length > 0) {
+        localStorage.setItem('opponentTeam', JSON.stringify(opponentPokemon));
+        // Verify the save
+        const saved = localStorage.getItem('opponentTeam');
+        console.log('Verified saved opponentTeam:', saved ? JSON.parse(saved) : null);
+      }
     } catch (error) {
       console.error('Error saving teams:', error);
     }
-  }, [opponentPokemon, playerPokemon]);
+  }, [playerPokemon, opponentPokemon]);
 
   const updateBattleData = (pokemonId, data) => {
     setBattleData(prev => ({
@@ -94,15 +108,31 @@ export const BattleProvider = ({ children }) => {
 
   const addPlayerPokemon = (pokemon) => {
     if (playerPokemon.length < MAX_ROSTER_SIZE) {
+      // Debug: Log incoming Pokemon data
+      console.log('Incoming Pokemon data:', pokemon);
+
+      // Store player Pokemon in the same structure as opponent Pokemon from PokeAPI
       const pokemonWithBattleData = {
-        ...pokemon,
-        currHP: pokemon.stats.find(stat => stat.stat.name === 'hp')?.base_stat || 0,
+        id: pokemon.id,
+        name: pokemon.name,
         sprites: pokemon.sprites,
         cries: pokemon.cries,
+        types: pokemon.types,
         stats: pokemon.stats,
-        moves: pokemon.moves
+        moves: pokemon.moves,
+        abilities: pokemon.abilities,
+        currHP: pokemon.stats.find(stat => stat.stat.name === 'hp')?.base_stat || 0
       };
-      setPlayerPokemon(prev => [...prev, pokemonWithBattleData]);
+      
+      // Debug: Log formatted Pokemon data
+      console.log('Formatted Pokemon data:', pokemonWithBattleData);
+      
+      setPlayerPokemon(prev => {
+        const newState = [...prev, pokemonWithBattleData];
+        console.log('Updated player Pokemon state:', newState);
+        return newState;
+      });
+      
       // Update battle data for the new Pokemon
       updateBattleData(pokemon.id, {
         images: pokemon.sprites,
@@ -266,7 +296,11 @@ export const BattleProvider = ({ children }) => {
     addPlayerPokemon,
     removePlayerPokemon,
     updatePlayerPokemon,
-    updatePokemonHP
+    updatePokemonHP,
+    clearTeams: () => {
+      setPlayerPokemon([]);
+      setOpponentPokemon([]);
+    }
   };
 
   return (
