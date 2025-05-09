@@ -6,7 +6,8 @@ import ActionButtons from "./ActionButtons";
 import { useBattle } from "../../context/BattleContext";
 import ActivePokemon from "./ActivePokemon";
 import HealthBar from "./HealthBar";
-import { startBattle } from "../../../utils/battleLogic";
+import { startBattle } from "../../utils/battleLogic.jsx";
+import { switchPokemon } from "../../utils/switchPokemon.jsx";
 
 const Battlescreen = () => {
   const {
@@ -21,16 +22,6 @@ const Battlescreen = () => {
   const [oppActivePokemon, setOppActivePokemon] = useState(null);
   const [showMsg, setShowMsg] = useState(false);
 
-  const switchPokemon = () => {
-    const currIndex = playerPokemon.findIndex(
-      (poke) => poke.id === playerActivePokemon.id
-    );
-
-    let nextIndex = (currIndex + 1) % playerPokemon.length;
-    setPlayerActivePokemon(playerPokemon[nextIndex]);
-    console.log("Next Pokemon Nr", nextIndex);
-  };
-
   useEffect(() => {
     if (playerActivePokemon) {
       setShowMsg(true);
@@ -42,6 +33,8 @@ const Battlescreen = () => {
     }
   }, [playerActivePokemon]);
 
+  console.log("PLAYER ", playerPokemon);
+
   useEffect(() => {
     if (playerPokemon?.length > 0) {
       setPlayerActivePokemon(playerPokemon[0]);
@@ -49,10 +42,10 @@ const Battlescreen = () => {
     if (opponentPokemon?.length > 0) {
       setOppActivePokemon(opponentPokemon[0]);
     }
-  }, [playerPokemon, opponentPokemon]);
+  }, []);
 
-  console.log("Opponent", opponentPokemon);
-  console.log("Player", playerPokemon);
+  // console.log("Opponent", opponentPokemon);
+  // console.log("Player", playerPokemon);
 
   return (
     <div className="bg-cyan-950 p-4">
@@ -101,16 +94,20 @@ const Battlescreen = () => {
         <Arena />
         <ActionButtons
           switchPokemon={switchPokemon}
-          oppActivePokemon={oppActivePokemon}
+          playerPokemon={playerPokemon}
           playerActivePokemon={playerActivePokemon}
+          setPlayerActivePokemon={setPlayerActivePokemon}
           startBattle={() =>
             startBattle({
               playerActivePokemon,
               setPlayerActivePokemon,
               setPlayerPokemon,
               oppActivePokemon,
+              opponentPokemon,
               setOppActivePokemon,
               setOpponentPokemon,
+              switchPokemon,
+              playerPokemon,
             })
           }
         />

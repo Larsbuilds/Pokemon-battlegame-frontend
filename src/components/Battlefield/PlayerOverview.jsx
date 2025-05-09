@@ -20,7 +20,6 @@ const PlayerOverview = ({
     return e.currHP <= 0 ? "opacity-25" : "";
   };
 
-  console.log(pokemon);
   return (
     <div className="relative -top-8">
       <img

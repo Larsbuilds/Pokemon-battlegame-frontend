@@ -1,10 +1,15 @@
+import { switchEnemy } from "./switchPokemon";
+
 export function startBattle({
   playerActivePokemon,
   setPlayerActivePokemon,
   setPlayerPokemon,
   oppActivePokemon,
+  opponentPokemon,
   setOppActivePokemon,
   setOpponentPokemon,
+  switchPokemon,
+  playerPokemon,
 }) {
   if (!playerActivePokemon || !oppActivePokemon) return;
 
@@ -33,7 +38,8 @@ export function startBattle({
   );
 
   if (newOppHp <= 0) {
-    console.log("Defeat!");
+    console.log(`${oppActivePokemon.name} defeated.`);
+    switchEnemy({ opponentPokemon, oppActivePokemon, setOppActivePokemon });
     return;
   }
 
@@ -61,6 +67,11 @@ export function startBattle({
   );
 
   if (newPlayerHp <= 0) {
-    console.log("Defeat!");
+    console.log(`${playerActivePokemon.name} defeated.`);
+    switchPokemon({
+      playerPokemon,
+      playerActivePokemon,
+      setPlayerActivePokemon,
+    });
   }
 }

@@ -81,8 +81,8 @@ export const BattleProvider = ({ children }) => {
   // Save teams to localStorage
   useEffect(() => {
     try {
-      console.log("Saving to localStorage - playerPokemon:", playerPokemon);
-      console.log("Saving to localStorage - opponentPokemon:", opponentPokemon);
+      // console.log("Saving to localStorage - playerPokemon:", playerPokemon);
+      // console.log("Saving to localStorage - opponentPokemon:", opponentPokemon);
 
       if (playerPokemon.length > 0) {
         const playerTeamString = JSON.stringify(playerPokemon);
@@ -90,12 +90,12 @@ export const BattleProvider = ({ children }) => {
         // Verify the save
         const saved = localStorage.getItem("playerTeam");
         const parsed = saved ? JSON.parse(saved) : null;
-        console.log(
-          "Verified saved playerTeam:",
-          parsed,
-          "Length:",
-          parsed ? parsed.length : 0
-        );
+        // console.log(
+        //   "Verified saved playerTeam:",
+        //   parsed,
+        //   "Length:",
+        //   parsed ? parsed.length : 0
+        // );
       }
 
       if (opponentPokemon.length > 0) {
@@ -123,12 +123,12 @@ export const BattleProvider = ({ children }) => {
         // Verify the save
         const saved = localStorage.getItem("opponentTeam");
         const parsed = saved ? JSON.parse(saved) : null;
-        console.log(
-          "Verified saved opponentTeam:",
-          parsed,
-          "Length:",
-          parsed ? parsed.length : 0
-        );
+        // console.log(
+        //   "Verified saved opponentTeam:",
+        //   parsed,
+        //   "Length:",
+        //   parsed ? parsed.length : 0
+        // );
       }
     } catch (error) {
       console.error("Error saving teams:", error);
@@ -167,7 +167,7 @@ export const BattleProvider = ({ children }) => {
   const addPlayerPokemon = (pokemon) => {
     if (playerPokemon.length < MAX_ROSTER_SIZE) {
       // Debug: Log incoming Pokemon data
-      console.log("Incoming Pokemon data:", pokemon);
+      // console.log("Incoming Pokemon data:", pokemon);
 
       // Store the full sprites object as provided
       const essentialPokemonData = {
@@ -183,7 +183,7 @@ export const BattleProvider = ({ children }) => {
       };
 
       // Debug: Log formatted Pokemon data
-      console.log("Formatted Pokemon data:", essentialPokemonData);
+      // console.log("Formatted Pokemon data:", essentialPokemonData);
 
       // Update player Pokemon state and localStorage in one operation
       setPlayerPokemon((prev) => {
@@ -191,7 +191,7 @@ export const BattleProvider = ({ children }) => {
         try {
           // Save to localStorage immediately
           localStorage.setItem("playerTeam", JSON.stringify(newPlayerPokemon));
-          console.log("Updated player team:", newPlayerPokemon);
+          // console.log("Updated player team:", newPlayerPokemon);
         } catch (error) {
           console.error("Error saving to localStorage:", error);
           // If we hit storage limit, clear old data and try again
@@ -237,7 +237,7 @@ export const BattleProvider = ({ children }) => {
       // Verify the save
       const savedPlayerTeam = localStorage.getItem("playerTeam");
       const parsedTeam = savedPlayerTeam ? JSON.parse(savedPlayerTeam) : null;
-      console.log("Verified player team save:", parsedTeam);
+      // console.log("Verified player team save:", parsedTeam);
     }
   };
 
@@ -411,7 +411,7 @@ export const BattleProvider = ({ children }) => {
     setPlayerPokemon(formattedTeam);
     try {
       localStorage.setItem("playerTeam", JSON.stringify(formattedTeam));
-      console.log("Set full player team:", formattedTeam);
+      // console.log("Set full player team:", formattedTeam);
     } catch (error) {
       console.error("Error saving full player team to localStorage:", error);
       if (error.name === "QuotaExceededError") {
@@ -482,7 +482,7 @@ export const BattleProvider = ({ children }) => {
     setOpponentPokemon(formattedTeam);
     try {
       localStorage.setItem("opponentTeam", JSON.stringify(formattedTeam));
-      console.log("Set full opponent team:", formattedTeam);
+      // console.log("Set full opponent team:", formattedTeam);
     } catch (error) {
       console.error("Error saving full opponent team to localStorage:", error);
       if (error.name === "QuotaExceededError") {
