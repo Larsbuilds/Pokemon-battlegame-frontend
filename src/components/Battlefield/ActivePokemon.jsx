@@ -4,10 +4,10 @@ const ActivePokemon = ({ playerPkmn, oppPkmn }) => {
   if (!playerPkmn || !oppPkmn) return null;
   console.log("hallo ", oppPkmn);
   return (
-    <div class="flex gap-[8vw] relative mt-44">
+    <div className="flex gap-[8vw] relative mt-44">
       <img
         className="size-[180px]"
-        src={oppPkmn.sprites.other.showdown.back_default}
+        src={playerPkmn?.sprites?.other?.showdown?.back_default}
         alt={playerPkmn.name}
       ></img>
       <img

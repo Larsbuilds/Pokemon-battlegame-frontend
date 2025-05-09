@@ -46,7 +46,12 @@ const Battlescreen = () => {
         className=" h-full w-full flex flex-col justify-center items-center"
       >
         <div className="z-50 absolute w-[1120px] flex items-center justify-between px-8">
-          <PlayerOverview player={1} pokemon={playerPokemon} />
+          <PlayerOverview
+            player={1}
+            pokemon={playerPokemon}
+            playerActivePokemon={playerActivePokemon}
+            oppActivePokemon={oppActivePokemon}
+          />
           <div className="flex-1 flex justify-center">
             <div className="flex flex-col h-[65vh]">
               <HealthBar
@@ -59,7 +64,12 @@ const Battlescreen = () => {
               />
             </div>
           </div>
-          <PlayerOverview player={2} pokemon={opponentPokemon} />
+          <PlayerOverview
+            player={2}
+            pokemon={opponentPokemon}
+            playerActivePokemon={playerActivePokemon}
+            oppActivePokemon={oppActivePokemon}
+          />
         </div>
         <Arena />
         <ActionButtons
