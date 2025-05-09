@@ -127,7 +127,10 @@ export const BattleProvider = ({ children }) => {
       const pokemonWithBattleData = {
         id: pokemon.id,
         name: pokemon.name,
-        sprites: pokemon.sprites,
+        sprites: {
+          ...pokemon.sprites,
+          animated: pokemon.sprites.versions?.['generation-v']?.['black-white']?.animated || null
+        },
         cries: pokemon.cries,
         types: pokemon.types,
         stats: pokemon.stats,
