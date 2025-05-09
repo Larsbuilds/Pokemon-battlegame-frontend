@@ -81,18 +81,22 @@ export const BattleProvider = ({ children }) => {
 
   const addPlayerPokemon = (pokemon) => {
     if (playerPokemon.length < MAX_ROSTER_SIZE) {
-      const pokemonWithHP = {
+      const pokemonWithBattleData = {
         ...pokemon,
-        currHP: pokemon.stats.find(stat => stat.stat.name === 'hp')?.base_stat || 0
+        currHP: pokemon.stats.find(stat => stat.stat.name === 'hp')?.base_stat || 0,
+        sprites: pokemon.sprites,
+        cries: pokemon.cries,
+        stats: pokemon.stats,
+        moves: pokemon.moves
       };
-      setPlayerPokemon(prev => [...prev, pokemonWithHP]);
+      setPlayerPokemon(prev => [...prev, pokemonWithBattleData]);
       // Update battle data for the new Pokemon
       updateBattleData(pokemon.id, {
         images: pokemon.sprites,
         sounds: pokemon.cries,
         stats: pokemon.stats,
         moves: pokemon.moves,
-        currHP: pokemonWithHP.currHP
+        currHP: pokemonWithBattleData.currHP
       });
     }
   };
@@ -102,13 +106,17 @@ export const BattleProvider = ({ children }) => {
   };
 
   const updatePlayerPokemon = (index, updatedPokemon) => {
-    const pokemonWithHP = {
+    const pokemonWithBattleData = {
       ...updatedPokemon,
-      currHP: updatedPokemon.currHP || updatedPokemon.stats.find(stat => stat.stat.name === 'hp')?.base_stat || 0
+      currHP: updatedPokemon.currHP || updatedPokemon.stats.find(stat => stat.stat.name === 'hp')?.base_stat || 0,
+      sprites: updatedPokemon.sprites,
+      cries: updatedPokemon.cries,
+      stats: updatedPokemon.stats,
+      moves: updatedPokemon.moves
     };
     setPlayerPokemon(prev => {
       const newTeam = [...prev];
-      newTeam[index] = pokemonWithHP;
+      newTeam[index] = pokemonWithBattleData;
       return newTeam;
     });
     // Update battle data for the updated Pokemon
@@ -117,7 +125,7 @@ export const BattleProvider = ({ children }) => {
       sounds: updatedPokemon.cries,
       stats: updatedPokemon.stats,
       moves: updatedPokemon.moves,
-      currHP: pokemonWithHP.currHP
+      currHP: pokemonWithBattleData.currHP
     });
   };
 
