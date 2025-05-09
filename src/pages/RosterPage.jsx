@@ -11,31 +11,32 @@ const RosterPage = () => {
     opponentPokemon, 
     generateOpponentTeam, 
     replaceOpponentPokemon,
-    updateBattleData,
     playerName,
     setPlayerNameAndSave,
-    addPlayerPokemon,
-    clearTeams
+    clearTeams,
+    setPlayerTeam,
+    setOpponentTeam
   } = useBattle();
   const [error, setError] = useState(null);
   const [showNamePopup, setShowNamePopup] = useState(false);
   const navigate = useNavigate();
   const [battleReady, setBattleReady] = useState(false);
-  const [pokemonAdded, setPokemonAdded] = useState(0);
 
   useEffect(() => {
-    generateOpponentTeam();
+    if (opponentPokemon.length === 0) {
+      generateOpponentTeam();
+    }
     // Show name popup if no name is set
     if (!playerName) {
       setShowNamePopup(true);
     }
-  }, [generateOpponentTeam, playerName]);
+  }, [generateOpponentTeam, playerName, opponentPokemon.length]);
 
   useEffect(() => {
-    if (battleReady && pokemonAdded === MAX_ROSTER_SIZE) {
+    if (battleReady) {
       navigate('/battle');
     }
-  }, [battleReady, pokemonAdded, MAX_ROSTER_SIZE, navigate]);
+  }, [battleReady, navigate]);
 
   const handleNameSubmit = (name) => {
     setPlayerNameAndSave(name);
@@ -55,6 +56,50 @@ const RosterPage = () => {
     replaceOpponentPokemon(index);
   };
 
+  // Helper to fetch minimal sprite data from PokeAPI
+  const fetchMinimalPokemonData = async (pokemon) => {
+    // If all required sprite fields are present, return as is
+    if (
+      pokemon.sprites &&
+      pokemon.sprites.front_default &&
+      pokemon.sprites.other &&
+      pokemon.sprites.other['official-artwork']?.front_default &&
+      pokemon.sprites.other.showdown?.front_default &&
+      pokemon.sprites.other.showdown?.back_default
+    ) {
+      return {
+        id: pokemon.id,
+        name: pokemon.name,
+        sprites: pokemon.sprites,
+        types: pokemon.types,
+        stats: pokemon.stats,
+        currHP: pokemon.currHP || (pokemon.stats.find(stat => stat.stat?.name === 'hp')?.base_stat || 0)
+      };
+    }
+    // Otherwise, fetch from PokeAPI
+    const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemon.id}`);
+    const data = await response.json();
+    return {
+      id: data.id,
+      name: data.name,
+      sprites: {
+        front_default: data.sprites.front_default,
+        other: {
+          'official-artwork': {
+            front_default: data.sprites.other['official-artwork']?.front_default || data.sprites.front_default
+          },
+          showdown: {
+            front_default: data.sprites.other.showdown?.front_default || data.sprites.front_default,
+            back_default: data.sprites.other.showdown?.back_default || data.sprites.front_default
+          }
+        }
+      },
+      types: data.types,
+      stats: data.stats,
+      currHP: data.stats.find(stat => stat.stat?.name === 'hp')?.base_stat || 0
+    };
+  };
+
   const handleBattle = async () => {
     if (roster.length !== MAX_ROSTER_SIZE) {
       setError('You need 6 Pokemon in your roster to start a battle!');
@@ -64,69 +109,39 @@ const RosterPage = () => {
     // Debug: Log roster data before battle
     console.log('Roster Pokemon before battle:', roster);
 
-    // Reset Pokemon added counter
-    setPokemonAdded(0);
-
-    // Create an array to hold all formatted Pokemon
-    const formattedPokemon = roster.map(pokemon => ({
-      id: pokemon.id,
-      name: pokemon.name,
-      sprites: {
-        front_default: pokemon.sprite,
-        other: {
-          'official-artwork': {
-            front_default: pokemon.sprite
-          }
-        }
-      },
-      cries: {
-        latest: pokemon.cries?.latest || '',
-        legacy: pokemon.cries?.legacy || ''
-      },
-      types: pokemon.types.map(type => ({
-        type: {
-          name: typeof type === 'string' ? type : type.type.name
-        }
-      })),
-      stats: pokemon.stats.map(stat => ({
-        stat: {
-          name: stat.name
-        },
-        base_stat: stat.value
-      })),
-      moves: pokemon.moves || [],
-      abilities: pokemon.abilities || [],
-      currHP: pokemon.stats.find(stat => stat.name === 'hp')?.value || 0
-    }));
-
-    console.log('Formatted Pokemon array:', formattedPokemon);
+    // Store opponent team before clearing
+    const currentOpponentTeam = [...opponentPokemon];
 
     // Clear existing Pokemon in battle context
     clearTeams();
 
     // Wait for state to clear
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise(resolve => setTimeout(resolve, 100));
 
-    // Add each Pokemon to the battle context
-    for (const pokemon of formattedPokemon) {
-      console.log('Adding Pokemon to battle:', pokemon);
-      addPlayerPokemon(pokemon);
-      setPokemonAdded(prev => prev + 1);
-    }
+    // Build minimal, complete player team array
+    const formattedPokemon = await Promise.all(
+      roster.map(pokemon => fetchMinimalPokemonData(pokemon))
+    );
 
-    // Copy opponent team from roster page to battle context
-    opponentPokemon.forEach(pokemon => {
-      updateBattleData(pokemon.id, {
-        images: pokemon.sprites,
-        sounds: pokemon.cries,
-        stats: pokemon.stats,
-        moves: pokemon.moves
-      });
-    });
+    // Add all Pokemon at once using setPlayerTeam
+    setPlayerTeam(formattedPokemon);
 
-    // Check localStorage after adding Pokemon
+    // Restore opponent team using setOpponentTeam
+    setOpponentTeam(currentOpponentTeam);
+
+    // Wait for state updates to complete
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Verify the data is in localStorage
     const savedPlayerTeam = localStorage.getItem('playerTeam');
-    console.log('Saved player team in localStorage:', savedPlayerTeam ? JSON.parse(savedPlayerTeam) : null);
+    const parsedPlayerTeam = savedPlayerTeam ? JSON.parse(savedPlayerTeam) : null;
+    console.log('Saved player team in localStorage:', parsedPlayerTeam);
+
+    if (!parsedPlayerTeam || parsedPlayerTeam.length !== MAX_ROSTER_SIZE) {
+      console.error('Player team not properly saved to localStorage');
+      setError('Failed to save player team. Please try again.');
+      return;
+    }
 
     // Set battle ready flag
     setBattleReady(true);
@@ -387,10 +402,12 @@ const RosterPage = () => {
                       types: Array.isArray(pokemon.types) 
                         ? pokemon.types.map(type => typeof type === 'string' ? type : type.type.name)
                         : [],
-                      stats: pokemon.stats.map(stat => ({
-                        name: stat.stat?.name || stat.name,
-                        value: stat.base_stat || stat.value
-                      }))
+                      stats: pokemon.stats
+                        .filter(stat => stat.stat?.name === 'hp' || stat.stat?.name === 'attack')
+                        .map(stat => ({
+                          name: stat.stat?.name || stat.name,
+                          value: stat.base_stat || stat.value
+                        }))
                     }}
                     onRemove={handleRemove}
                     isDragging={false}
@@ -446,10 +463,12 @@ const RosterPage = () => {
                       types: Array.isArray(pokemon.types) 
                         ? pokemon.types.map(type => typeof type === 'string' ? type : type.type.name)
                         : [],
-                      stats: pokemon.stats.map(stat => ({
-                        name: stat.stat?.name || stat.name,
-                        value: stat.base_stat || stat.value
-                      }))
+                      stats: pokemon.stats
+                        .filter(stat => stat.stat?.name === 'hp' || stat.stat?.name === 'attack')
+                        .map(stat => ({
+                          name: stat.stat?.name || stat.name,
+                          value: stat.base_stat || stat.value
+                        }))
                     }}
                     onRemove={() => handleOpponentRemove(index)}
                     isDragging={false}

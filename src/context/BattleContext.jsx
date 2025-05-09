@@ -85,26 +85,61 @@ export const BattleProvider = ({ children }) => {
       console.log("Saving to localStorage - opponentPokemon:", opponentPokemon);
 
       if (playerPokemon.length > 0) {
-        localStorage.setItem("playerTeam", JSON.stringify(playerPokemon));
+        const playerTeamString = JSON.stringify(playerPokemon);
+        localStorage.setItem("playerTeam", playerTeamString);
         // Verify the save
         const saved = localStorage.getItem("playerTeam");
+        const parsed = saved ? JSON.parse(saved) : null;
         console.log(
           "Verified saved playerTeam:",
-          saved ? JSON.parse(saved) : null
+          parsed,
+          "Length:",
+          parsed ? parsed.length : 0
         );
       }
 
       if (opponentPokemon.length > 0) {
-        localStorage.setItem("opponentTeam", JSON.stringify(opponentPokemon));
+        // Store only essential data for opponent Pokemon
+        const essentialOpponentTeam = opponentPokemon.map(pokemon => ({
+          id: pokemon.id,
+          name: pokemon.name,
+          sprites: {
+            front_default: pokemon.sprites.front_default,
+            other: {
+              'official-artwork': {
+                front_default: pokemon.sprites.other?.['official-artwork']?.front_default || pokemon.sprites.front_default
+              }
+            }
+          },
+          types: pokemon.types,
+          stats: pokemon.stats,
+          currHP: pokemon.currHP
+        }));
+
+        const opponentTeamString = JSON.stringify(essentialOpponentTeam);
+        localStorage.setItem("opponentTeam", opponentTeamString);
         // Verify the save
         const saved = localStorage.getItem("opponentTeam");
+        const parsed = saved ? JSON.parse(saved) : null;
         console.log(
           "Verified saved opponentTeam:",
-          saved ? JSON.parse(saved) : null
+          parsed,
+          "Length:",
+          parsed ? parsed.length : 0
         );
       }
     } catch (error) {
       console.error("Error saving teams:", error);
+      if (error.name === 'QuotaExceededError') {
+        localStorage.clear();
+        // Try saving again after clearing
+        if (playerPokemon.length > 0) {
+          localStorage.setItem("playerTeam", JSON.stringify(playerPokemon));
+        }
+        if (opponentPokemon.length > 0) {
+          localStorage.setItem("opponentTeam", JSON.stringify(opponentPokemon));
+        }
+      }
     }
   }, [playerPokemon, opponentPokemon]);
 
@@ -118,45 +153,77 @@ export const BattleProvider = ({ children }) => {
     }));
   };
 
+  const clearTeams = () => {
+    setPlayerPokemon([]);
+    setOpponentPokemon([]);
+    setBattleData({});
+    localStorage.removeItem('playerTeam');
+    localStorage.removeItem('opponentTeam');
+    localStorage.removeItem('pokemonBattleData');
+  };
+
   const addPlayerPokemon = (pokemon) => {
     if (playerPokemon.length < MAX_ROSTER_SIZE) {
       // Debug: Log incoming Pokemon data
       console.log("Incoming Pokemon data:", pokemon);
 
-      // Store player Pokemon in the same structure as opponent Pokemon from PokeAPI
-      const pokemonWithBattleData = {
+      // Store the full sprites object as provided
+      const essentialPokemonData = {
         id: pokemon.id,
         name: pokemon.name,
-        sprites: {
-          ...pokemon.sprites,
-          animated: pokemon.sprites.versions?.['generation-v']?.['black-white']?.animated || null
-        },
-        cries: pokemon.cries,
+        sprites: pokemon.sprites, // <-- keep full sprites object
         types: pokemon.types,
         stats: pokemon.stats,
-        moves: pokemon.moves,
-        abilities: pokemon.abilities,
-        currHP:
-          pokemon.stats.find((stat) => stat.stat.name === "hp")?.base_stat || 0,
+        currHP: pokemon.currHP || (pokemon.stats.find((stat) => stat.stat?.name === "hp")?.base_stat || 0)
       };
 
       // Debug: Log formatted Pokemon data
-      console.log("Formatted Pokemon data:", pokemonWithBattleData);
+      console.log("Formatted Pokemon data:", essentialPokemonData);
 
-      setPlayerPokemon((prev) => {
-        const newState = [...prev, pokemonWithBattleData];
-        console.log("Updated player Pokemon state:", newState);
-        return newState;
+      // Update player Pokemon state and localStorage in one operation
+      setPlayerPokemon(prev => {
+        const newPlayerPokemon = [...prev, essentialPokemonData];
+        try {
+          // Save to localStorage immediately
+          localStorage.setItem('playerTeam', JSON.stringify(newPlayerPokemon));
+          console.log('Updated player team:', newPlayerPokemon);
+        } catch (error) {
+          console.error('Error saving to localStorage:', error);
+          // If we hit storage limit, clear old data and try again
+          if (error.name === 'QuotaExceededError') {
+            localStorage.clear();
+            localStorage.setItem('playerTeam', JSON.stringify(newPlayerPokemon));
+          }
+        }
+        return newPlayerPokemon;
       });
 
-      // Update battle data for the new Pokemon
-      updateBattleData(pokemon.id, {
-        images: pokemon.sprites,
-        sounds: pokemon.cries,
-        stats: pokemon.stats,
-        moves: pokemon.moves,
-        currHP: pokemonWithBattleData.currHP,
+      // Update battle data for the new Pokemon with minimal data
+      setBattleData(prev => {
+        const newBattleData = {
+          ...prev,
+          [pokemon.id]: {
+            images: essentialPokemonData.sprites,
+            stats: essentialPokemonData.stats,
+            currHP: essentialPokemonData.currHP
+          }
+        };
+        try {
+          localStorage.setItem('pokemonBattleData', JSON.stringify(newBattleData));
+        } catch (error) {
+          console.error('Error saving battle data:', error);
+          if (error.name === 'QuotaExceededError') {
+            localStorage.clear();
+            localStorage.setItem('pokemonBattleData', JSON.stringify(newBattleData));
+          }
+        }
+        return newBattleData;
       });
+
+      // Verify the save
+      const savedPlayerTeam = localStorage.getItem('playerTeam');
+      const parsedTeam = savedPlayerTeam ? JSON.parse(savedPlayerTeam) : null;
+      console.log('Verified player team save:', parsedTeam);
     }
   };
 
@@ -313,6 +380,107 @@ export const BattleProvider = ({ children }) => {
     setPlayerName(name);
   };
 
+  // Set the entire player team at once
+  const setPlayerTeam = (pokemonArray) => {
+    // Ensure each pokemon has a full sprites object and essential data
+    const formattedTeam = pokemonArray.map(pokemon => ({
+      id: pokemon.id,
+      name: pokemon.name,
+      sprites: pokemon.sprites,
+      types: pokemon.types,
+      stats: pokemon.stats,
+      currHP: pokemon.currHP || (pokemon.stats.find((stat) => stat.stat?.name === "hp")?.base_stat || 0)
+    }));
+    setPlayerPokemon(formattedTeam);
+    try {
+      localStorage.setItem('playerTeam', JSON.stringify(formattedTeam));
+      console.log('Set full player team:', formattedTeam);
+    } catch (error) {
+      console.error('Error saving full player team to localStorage:', error);
+      if (error.name === 'QuotaExceededError') {
+        localStorage.clear();
+        localStorage.setItem('playerTeam', JSON.stringify(formattedTeam));
+      }
+    }
+    // Optionally update battleData for each
+    setBattleData(prev => {
+      const newBattleData = { ...prev };
+      formattedTeam.forEach(pokemon => {
+        newBattleData[pokemon.id] = {
+          images: pokemon.sprites,
+          stats: pokemon.stats,
+          currHP: pokemon.currHP
+        };
+      });
+      try {
+        localStorage.setItem('pokemonBattleData', JSON.stringify(newBattleData));
+      } catch (error) {
+        console.error('Error saving battle data:', error);
+        if (error.name === 'QuotaExceededError') {
+          localStorage.clear();
+          localStorage.setItem('pokemonBattleData', JSON.stringify(newBattleData));
+        }
+      }
+      return newBattleData;
+    });
+  };
+
+  // Set the entire opponent team at once
+  const setOpponentTeam = (pokemonArray) => {
+    // Ensure each pokemon has a full sprites object and essential data
+    const formattedTeam = pokemonArray.map(pokemon => ({
+      id: pokemon.id,
+      name: pokemon.name,
+      sprites: {
+        front_default: pokemon.sprites.front_default,
+        other: {
+          'official-artwork': {
+            front_default: pokemon.sprites.other?.['official-artwork']?.front_default || pokemon.sprites.front_default
+          },
+          showdown: {
+            front_default: pokemon.sprites.other?.showdown?.front_default || pokemon.sprites.front_default,
+            back_default: pokemon.sprites.other?.showdown?.back_default || pokemon.sprites.front_default
+          }
+        }
+      },
+      types: pokemon.types,
+      stats: pokemon.stats,
+      currHP: pokemon.currHP || (pokemon.stats.find((stat) => stat.stat?.name === "hp")?.base_stat || 0)
+    }));
+    setOpponentPokemon(formattedTeam);
+    try {
+      localStorage.setItem('opponentTeam', JSON.stringify(formattedTeam));
+      console.log('Set full opponent team:', formattedTeam);
+    } catch (error) {
+      console.error('Error saving full opponent team to localStorage:', error);
+      if (error.name === 'QuotaExceededError') {
+        localStorage.clear();
+        localStorage.setItem('opponentTeam', JSON.stringify(formattedTeam));
+      }
+    }
+    // Update battle data for each opponent Pokemon
+    setBattleData(prev => {
+      const newBattleData = { ...prev };
+      formattedTeam.forEach(pokemon => {
+        newBattleData[pokemon.id] = {
+          images: pokemon.sprites,
+          stats: pokemon.stats,
+          currHP: pokemon.currHP
+        };
+      });
+      try {
+        localStorage.setItem('pokemonBattleData', JSON.stringify(newBattleData));
+      } catch (error) {
+        console.error('Error saving battle data:', error);
+        if (error.name === 'QuotaExceededError') {
+          localStorage.clear();
+          localStorage.setItem('pokemonBattleData', JSON.stringify(newBattleData));
+        }
+      }
+      return newBattleData;
+    });
+  };
+
   const value = {
     opponentPokemon,
     playerPokemon,
@@ -326,10 +494,9 @@ export const BattleProvider = ({ children }) => {
     removePlayerPokemon,
     updatePlayerPokemon,
     updatePokemonHP,
-    clearTeams: () => {
-      setPlayerPokemon([]);
-      setOpponentPokemon([]);
-    },
+    clearTeams,
+    setPlayerTeam,
+    setOpponentTeam,
   };
 
   return (
