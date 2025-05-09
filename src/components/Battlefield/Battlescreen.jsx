@@ -13,6 +13,16 @@ const Battlescreen = () => {
   const [playerActivePokemon, setPlayerActivePokemon] = useState(null);
   const [oppActivePokemon, setOppActivePokemon] = useState(null);
 
+  const switchPokemon = () => {
+    const currIndex = playerPokemon.findIndex(
+      (poke) => poke.id === playerActivePokemon.id
+    );
+
+    let nextIndex = (currIndex + 1) % playerPokemon.length;
+    setPlayerActivePokemon(playerPokemon[nextIndex]);
+    console.log("Next Pokemon Nr", nextIndex);
+  };
+
   useEffect(() => {
     if (playerPokemon?.length > 0) {
       setPlayerActivePokemon(playerPokemon[0]);
@@ -23,7 +33,6 @@ const Battlescreen = () => {
   }, [playerPokemon, opponentPokemon]);
 
   console.log("Opponent", opponentPokemon);
-
   console.log("Player", playerPokemon);
 
   return (
@@ -53,7 +62,13 @@ const Battlescreen = () => {
           <PlayerOverview player={2} pokemon={opponentPokemon} />
         </div>
         <Arena />
-        <ActionButtons />
+        <ActionButtons
+          switchPokemon={switchPokemon}
+          // oppActivePokemon={oppActivePokemon}
+          // setOppActivePokemon={setOppActivePokemon}
+          // playerActivePokemon={playerActivePokemon}
+          // setPlayerActivePokemon={setPlayerActivePokemon}
+        />
       </div>
     </div>
   );
