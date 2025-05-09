@@ -16,6 +16,10 @@ export const BattleProvider = ({ children }) => {
   const [opponentPokemon, setOpponentPokemon] = useState([]);
   const [playerPokemon, setPlayerPokemon] = useState([]);
   const [battleData, setBattleData] = useState({});
+  const [playerName, setPlayerName] = useState(() => {
+    const savedName = localStorage.getItem('playerName');
+    return savedName || '';
+  });
 
   // Load battle data and teams from localStorage on initial render
   useEffect(() => {
@@ -23,6 +27,7 @@ export const BattleProvider = ({ children }) => {
       const savedBattleData = localStorage.getItem('pokemonBattleData');
       const savedOpponentTeam = localStorage.getItem('opponentTeam');
       const savedPlayerTeam = localStorage.getItem('playerTeam');
+      const savedName = localStorage.getItem('playerName');
       
       if (savedBattleData) {
         setBattleData(JSON.parse(savedBattleData));
@@ -33,10 +38,18 @@ export const BattleProvider = ({ children }) => {
       if (savedPlayerTeam) {
         setPlayerPokemon(JSON.parse(savedPlayerTeam));
       }
+      if (savedName) {
+        setPlayerName(savedName);
+      }
     } catch (error) {
       console.error('Error loading battle data:', error);
     }
   }, []);
+
+  // Save player name to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('playerName', playerName);
+  }, [playerName]);
 
   // Save battle data to localStorage whenever it changes
   useEffect(() => {
@@ -237,10 +250,16 @@ export const BattleProvider = ({ children }) => {
     return pokemon;
   };
 
+  const setPlayerNameAndSave = (name) => {
+    setPlayerName(name);
+  };
+
   const value = {
     opponentPokemon,
     playerPokemon,
     battleData,
+    playerName,
+    setPlayerNameAndSave,
     updateBattleData,
     generateOpponentTeam,
     replaceOpponentPokemon,

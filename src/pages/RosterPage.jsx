@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRoster } from '../context/RosterContext';
 import { useBattle } from '../context/BattleContext';
 import PokemonRosterCard from '../components/PokemonRosterCard';
+import NameInputPopup from '../components/NameInputPopup';
 import { useNavigate, Link } from 'react-router-dom';
 
 const RosterPage = () => {
@@ -13,14 +14,26 @@ const RosterPage = () => {
     addPlayerPokemon,
     playerPokemon,
     removePlayerPokemon,
-    updateBattleData
+    updateBattleData,
+    playerName,
+    setPlayerNameAndSave
   } = useBattle();
   const [error, setError] = useState(null);
+  const [showNamePopup, setShowNamePopup] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     generateOpponentTeam();
-  }, [generateOpponentTeam]);
+    // Show name popup if no name is set
+    if (!playerName) {
+      setShowNamePopup(true);
+    }
+  }, [generateOpponentTeam, playerName]);
+
+  const handleNameSubmit = (name) => {
+    setPlayerNameAndSave(name);
+    setShowNamePopup(false);
+  };
 
   const handleRemove = (pokemonId) => {
     try {
@@ -229,6 +242,12 @@ const RosterPage = () => {
 
   return (
     <div className="roster-page" style={{ position: 'relative', minHeight: '100vh' }}>
+      {showNamePopup && (
+        <NameInputPopup
+          onSubmit={handleNameSubmit}
+          initialName={playerName}
+        />
+      )}
       {error && (
         <div style={{
           backgroundColor: '#ffebee',
@@ -246,7 +265,87 @@ const RosterPage = () => {
       <div style={containerStyle} className="flex flex-col lg:flex-row gap-8 p-4 max-w-[1600px] mx-auto h-auto lg:h-[calc(100vh-100px)]">
         {/* My Roster Section */}
         <div style={rosterSectionStyle}>
-          <h1 style={{ ...titleStyle, color: '#1976D2' }}>My Roster</h1>
+          <div 
+            style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '1rem',
+              padding: '0.5rem 2.5rem 0.5rem 0.5rem',
+              borderRadius: '8px',
+              transition: 'background-color 0.3s ease',
+              minHeight: '56px',
+              maxWidth: '100%',
+              cursor: 'pointer',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(33, 150, 243, 0.1)';
+              const editButton = e.currentTarget.querySelector('button');
+              if (editButton) {
+                editButton.style.opacity = '1';
+                editButton.style.transform = 'translateX(0)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              const editButton = e.currentTarget.querySelector('button');
+              if (editButton) {
+                editButton.style.opacity = '0';
+                editButton.style.transform = 'translateX(-10px)';
+              }
+            }}
+            onClick={() => setShowNamePopup(true)}
+          >
+            <h1 style={{ 
+              ...titleStyle, 
+              color: '#1976D2',
+              margin: 0,
+              transition: 'all 0.3s ease',
+              flex: 1,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              userSelect: 'none',
+            }}>
+              {playerName ? `${playerName}'s Roster` : 'My Roster'}
+            </h1>
+            <button
+              tabIndex={-1}
+              style={{
+                backgroundColor: 'transparent',
+                border: 'none',
+                color: '#2196F3',
+                cursor: 'pointer',
+                padding: '8px',
+                opacity: 0,
+                transition: 'all 0.3s ease',
+                transform: 'translateX(-10px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%',
+                marginLeft: '12px',
+                pointerEvents: 'none',
+              }}
+              aria-hidden="true"
+              title="Edit name"
+            >
+              <svg 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+          </div>
           <div style={cardsContainerStyle}>
             {roster.map((pokemon) => (
               <div key={`roster-${pokemon.id}`} style={cardWrapperStyle}>
