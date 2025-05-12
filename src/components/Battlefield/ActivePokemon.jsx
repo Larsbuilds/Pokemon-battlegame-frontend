@@ -2,17 +2,17 @@ import { useBattle } from "../../context/BattleContext";
 
 const ActivePokemon = ({ playerPkmn, oppPkmn }) => {
   if (!playerPkmn || !oppPkmn) return null;
-  console.log("hallo ", oppPkmn);
+
   return (
-    <div className="flex gap-[8vw] relative mt-44">
+    <div className="flex gap-[12vw] relative mt-44">
       <img
-        className="size-[180px]"
+        className="w-[120px]"
         src={playerPkmn?.sprites?.other?.showdown?.back_default}
         alt={playerPkmn.name}
       ></img>
       <img
-        className="size-[120px] relative -top-10"
-        src={oppPkmn.sprites.other.showdown.front_default}
+        className="w-[100px]  relative -top-10"
+        src={oppPkmn?.sprites?.other?.showdown?.front_default}
         alt={oppPkmn.name}
       ></img>
     </div>
