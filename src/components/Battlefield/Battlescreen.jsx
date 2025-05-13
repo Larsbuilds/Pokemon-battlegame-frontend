@@ -24,6 +24,7 @@ const Battlescreen = () => {
   const [oppActivePokemon, setOppActivePokemon] = useState(null);
   const [showMsg, setShowMsg] = useState(false);
   const [battleResult, setBattleResult] = useState(null);
+  const [battleMessage, setBattleMessage] = useState("");
 
   useEffect(() => {
     if (playerActivePokemon) {
@@ -51,6 +52,12 @@ const Battlescreen = () => {
     recordBattle(isWin);
   };
 
+  const handleBattleMessage = (message) => {
+    setBattleMessage(message);
+    // Clear message after 3 seconds
+    setTimeout(() => setBattleMessage(""), 3000);
+  };
+
   return (
     <div className="bg-cyan-950 p-4">
       <div
@@ -67,6 +74,11 @@ const Battlescreen = () => {
             className="absolute -translate-y-1/2 bg-white rounded-md p-2 font-bold animate-riseFade z-[9999] shadow-xl"
           >
             <p>Go, {playerActivePokemon?.name.toUpperCase()} !!!</p>
+          </div>
+        )}
+        {battleMessage && (
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 bg-white/90 rounded-md p-3 font-bold animate-riseFade z-[9999] shadow-xl text-center min-w-[200px]">
+            <p>{battleMessage}</p>
           </div>
         )}
         <div className="z-50 absolute w-[1120px] flex items-center justify-between px-8">
@@ -113,6 +125,7 @@ const Battlescreen = () => {
               switchPokemon,
               playerPokemon,
               recordBattle: handleBattleEnd,
+              onBattleMessage: handleBattleMessage,
             })
           }
         />
