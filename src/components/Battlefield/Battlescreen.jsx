@@ -28,6 +28,7 @@ const Battlescreen = () => {
 
   const [playerAnimation, setPlayerAnimation] = useState(null);
   const [opponentAnimation, setOpponentAnimation] = useState(null);
+  const [blockFighting, setBlockFighting] = useState(false);
 
   useEffect(() => {
     if (playerActivePokemon) {
@@ -122,6 +123,7 @@ const Battlescreen = () => {
           playerPokemon={playerPokemon}
           playerActivePokemon={playerActivePokemon}
           setPlayerActivePokemon={setPlayerActivePokemon}
+          blockFighting={blockFighting}
           startBattle={() =>
             startBattle({
               playerActivePokemon,
@@ -135,24 +137,25 @@ const Battlescreen = () => {
               playerPokemon,
               setPlayerAnimation,
               setOpponentAnimation,
+              setBlockFighting,
 
               recordBattle: handleBattleEnd,
               onBattleMessage: handleBattleMessage,
             })
           }
         />
-        <button
+        {/* <button
           onClick={() => setPlayerAnimation({ type: "attack", id: Date.now() })}
         >
-          AATTACKKK{" "}
+          AATTACKKK Player{" "}
         </button>
         <button
           onClick={() =>
             setOpponentAnimation({ type: "faint", id: Date.now() })
           }
         >
-          AATTACKKK{" "}
-        </button>
+          Die Opp
+        </button>*/}
       </div>
       {battleResult && (
         <BattleResultModal
