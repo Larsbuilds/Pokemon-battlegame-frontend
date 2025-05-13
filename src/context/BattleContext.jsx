@@ -21,6 +21,125 @@ export const BattleProvider = ({ children }) => {
     return savedName || "";
   });
 
+  // New state for scoring system and leaderboard
+  const [playerStats, setPlayerStats] = useState(() => {
+    const savedStats = localStorage.getItem("playerStats");
+    return savedStats ? JSON.parse(savedStats) : {
+      wins: 0,
+      losses: 0,
+      totalBattles: 0,
+      score: 1000, // Initial ELO-like score
+      winRate: 0
+    };
+  });
+
+  const [battleHistory, setBattleHistory] = useState(() => {
+    const savedHistory = localStorage.getItem("battleHistory");
+    return savedHistory ? JSON.parse(savedHistory) : [];
+  });
+
+  const [leaderboard, setLeaderboard] = useState(() => {
+    const savedLeaderboard = localStorage.getItem("leaderboard");
+    return savedLeaderboard ? JSON.parse(savedLeaderboard) : [];
+  });
+
+  // New functions for scoring system
+  const calculateScoreChange = (playerTeam, opponentTeam, isWin) => {
+    // Basic ELO-like scoring system
+    const baseChange = 25;
+    const playerTeamStrength = playerTeam.reduce((sum, pokemon) => 
+      sum + pokemon.stats.reduce((statSum, stat) => statSum + stat.base_stat, 0), 0);
+    const opponentTeamStrength = opponentTeam.reduce((sum, pokemon) => 
+      sum + pokemon.stats.reduce((statSum, stat) => statSum + stat.base_stat, 0), 0);
+    
+    // If opponent is stronger, winning gives more points and losing gives fewer points
+    // If opponent is weaker, winning gives fewer points and losing gives more points
+    const strengthDifference = (opponentTeamStrength - playerTeamStrength) / 100;
+    const scoreChange = Math.round(baseChange * (isWin ? 1 : -1) * (1 - strengthDifference));
+    
+    return scoreChange;
+  };
+
+  const updatePlayerStats = (isWin, newScore) => {
+    const newStats = {
+      ...playerStats,
+      wins: isWin ? playerStats.wins + 1 : playerStats.wins,
+      losses: isWin ? playerStats.losses : playerStats.losses + 1,
+      totalBattles: playerStats.totalBattles + 1,
+      winRate: ((isWin ? playerStats.wins + 1 : playerStats.wins) / (playerStats.totalBattles + 1)) * 100,
+      score: newScore // Update the score
+    };
+    setPlayerStats(newStats);
+    localStorage.setItem("playerStats", JSON.stringify(newStats));
+    return newStats; // Return the new stats for immediate use
+  };
+
+  const recordBattle = (isWin) => {
+    // Only record battle if we have valid teams
+    if (!playerPokemon.length || !opponentPokemon.length) {
+      console.error("Cannot record battle: Missing player or opponent team");
+      return;
+    }
+
+    const scoreChange = calculateScoreChange(playerPokemon, opponentPokemon, isWin);
+    const newScore = playerStats.score + scoreChange;
+    
+    const battleRecord = {
+      date: new Date().toISOString(),
+      opponent: "Opponent", // This can be replaced with actual opponent name when implemented
+      result: isWin ? "win" : "loss",
+      scoreChange: scoreChange,
+      playerTeam: playerPokemon,
+      opponentTeam: opponentPokemon
+    };
+
+    const newHistory = [battleRecord, ...battleHistory];
+    setBattleHistory(newHistory);
+    localStorage.setItem("battleHistory", JSON.stringify(newHistory));
+
+    // Update player stats with the new score
+    updatePlayerStats(isWin, newScore);
+  };
+
+  // Update leaderboard whenever playerStats changes
+  useEffect(() => {
+    if (!playerName) return;
+    updateLeaderboard(playerStats);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playerStats, playerName]);
+
+  const updateLeaderboard = (stats) => {
+    const playerEntry = {
+      playerId: playerName, // This can be replaced with actual player ID when implemented
+      playerName: playerName,
+      score: stats.score,
+      winRate: stats.winRate,
+      totalBattles: stats.totalBattles,
+      wins: stats.wins,
+      losses: stats.losses
+    };
+
+    const newLeaderboard = [...leaderboard];
+    const existingIndex = newLeaderboard.findIndex(entry => entry.playerId === playerEntry.playerId);
+    
+    if (existingIndex !== -1) {
+      newLeaderboard[existingIndex] = playerEntry;
+    } else {
+      newLeaderboard.push(playerEntry);
+    }
+
+    // Sort by score
+    newLeaderboard.sort((a, b) => b.score - a.score);
+    
+    // Add ranks
+    newLeaderboard.forEach((entry, index) => {
+      entry.rank = index + 1;
+    });
+
+    setLeaderboard(newLeaderboard);
+    localStorage.setItem("leaderboard", JSON.stringify(newLeaderboard));
+  };
+
   // Load battle data and teams from localStorage on initial render
   useEffect(() => {
     try {
@@ -524,6 +643,9 @@ export const BattleProvider = ({ children }) => {
     playerPokemon,
     battleData,
     playerName,
+    playerStats,
+    battleHistory,
+    leaderboard,
     setPlayerNameAndSave,
     updateBattleData,
     generateOpponentTeam,
@@ -537,6 +659,10 @@ export const BattleProvider = ({ children }) => {
     setOpponentTeam,
     setPlayerPokemon,
     setOpponentPokemon,
+    recordBattle,
+    calculateScoreChange,
+    updatePlayerStats,
+    updateLeaderboard
   };
 
   return (

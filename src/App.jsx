@@ -12,6 +12,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { RosterProvider } from "./context/RosterContext";
 import { BattleProvider } from "./context/BattleContext";
 import Battle from "./pages/Battle";
+import LeaderboardPage from "./pages/LeaderboardPage";
 
 function App() {
   return (
@@ -44,12 +45,17 @@ function App() {
                       >
                         My Roster
                       </Link>
-
                       <Link
                         to="/battle"
                         className="hover:text-pokemon-yellow transition-colors"
                       >
                         Battle
+                      </Link>
+                      <Link
+                        to="/leaderboard"
+                        className="hover:text-pokemon-yellow transition-colors"
+                      >
+                        Leaderboard
                       </Link>
                     </nav>
                   </div>
@@ -61,6 +67,7 @@ function App() {
                   <Route path="/pokemon/:name" element={<Detail />} />
                   <Route path="/roster" element={<RosterPage />} />
                   <Route path="/battle" element={<Battle />} />
+                  <Route path="/leaderboard" element={<LeaderboardPage />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </main>
