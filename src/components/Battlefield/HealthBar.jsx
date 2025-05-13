@@ -15,7 +15,7 @@ const HealthBar = ({ playerPkmn, oppPkmn }) => {
 
   return (
     <div className="bg-white rounded-md flex gap-4 px-4 py-2 justify-between ">
-      <div className="w-full">
+      <div className="w-full min-w-36">
         <p className="font-bold text-center">{playerPkmn.name.toUpperCase()}</p>
         <div
           style={{ width: `${playerHealthBarWidth}%` }}
@@ -23,7 +23,7 @@ const HealthBar = ({ playerPkmn, oppPkmn }) => {
         ></div>
       </div>
       <p className="font-bold text-2xl">VS</p>
-      <div className="w-full">
+      <div className="w-full min-w-36">
         <p className="font-bold text-center">{oppPkmn.name.toUpperCase()}</p>
         <div
           style={{ width: `${oppHealthBarWidth}%` }}

@@ -71,15 +71,18 @@ const ActivePokemon = ({
 
         @keyframes faint {
           0% { opacity: 1; transform: translateY(0) rotate(0); }
-          25% { transform: translateY(-10px) rotate(-10deg); }
-          50% { transform: translateY(10px) rotate(10deg); }
-          75% { transform: translateY(-10px) rotate(-10deg); }
+          15% { transform: translateY(-10px) rotate(-10deg); }
+          30% { transform: translateY(10px) rotate(10deg); }
+          45% { transform: translateY(-10px) rotate(-10deg); }
+          65% { opacity: 0; transform: translateY(20px) rotate(0); }
           100% { opacity: 0; transform: translateY(20px) rotate(0); }
         }
 
         @keyframes hit {
           0%, 100% { opacity: 1; transform: scale(1); }
           25% { opacity: 0.3; transform: scale(1.05); }
+          35% { opacity: 1;  }
+          45% { opacity: 0.3;  }
           50% { opacity: 1; transform: scale(0.95); }
           75% { opacity: 0.6; transform: scale(1); }
         }
@@ -93,11 +96,11 @@ const ActivePokemon = ({
         }
 
         .animate-faint {
-          animation: faint 0.8s ease-in-out forwards;
+          animation: faint 1.5s ease-in-out forwards;
         }
 
         .animate-hit {
-          animation: hit 0.3s ease-in-out;
+          animation: hit 01.5s ease-in-out;
         }
       `}</style>
 

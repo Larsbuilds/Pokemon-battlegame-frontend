@@ -26,6 +26,9 @@ const Battlescreen = () => {
   const [battleResult, setBattleResult] = useState(null);
   const [battleMessage, setBattleMessage] = useState("");
 
+  const [playerAnimation, setPlayerAnimation] = useState(null);
+  const [opponentAnimation, setOpponentAnimation] = useState(null);
+
   useEffect(() => {
     if (playerActivePokemon) {
       setShowMsg(true);
@@ -47,7 +50,11 @@ const Battlescreen = () => {
   }, []);
 
   const handleBattleEnd = (isWin) => {
-    const scoreChange = calculateScoreChange(playerPokemon, opponentPokemon, isWin);
+    const scoreChange = calculateScoreChange(
+      playerPokemon,
+      opponentPokemon,
+      isWin
+    );
     setBattleResult({ isWin, scoreChange });
     recordBattle(isWin);
   };
@@ -59,7 +66,7 @@ const Battlescreen = () => {
   };
 
   return (
-    <div className="bg-cyan-950 p-4">
+    <div className="bg-cyan-950 h-full p-4">
       <div
         style={{
           backgroundImage: `url(${gPokeballs})`,
@@ -97,6 +104,8 @@ const Battlescreen = () => {
               <ActivePokemon
                 playerPkmn={playerActivePokemon}
                 oppPkmn={oppActivePokemon}
+                playerAnimation={playerAnimation}
+                opponentAnimation={opponentAnimation}
               />
             </div>
           </div>
@@ -124,11 +133,26 @@ const Battlescreen = () => {
               setOpponentPokemon,
               switchPokemon,
               playerPokemon,
+              setPlayerAnimation,
+              setOpponentAnimation,
+
               recordBattle: handleBattleEnd,
               onBattleMessage: handleBattleMessage,
             })
           }
         />
+        <button
+          onClick={() => setPlayerAnimation({ type: "attack", id: Date.now() })}
+        >
+          AATTACKKK{" "}
+        </button>
+        <button
+          onClick={() =>
+            setOpponentAnimation({ type: "faint", id: Date.now() })
+          }
+        >
+          AATTACKKK{" "}
+        </button>
       </div>
       {battleResult && (
         <BattleResultModal
