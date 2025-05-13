@@ -1,4 +1,5 @@
 import { switchEnemy } from "./switchPokemon";
+import { useBattle } from "../context/BattleContext";
 
 export function startBattle({
   playerActivePokemon,
@@ -10,6 +11,7 @@ export function startBattle({
   setOpponentPokemon,
   switchPokemon,
   playerPokemon,
+  recordBattle,
 }) {
   if (!playerActivePokemon || !oppActivePokemon) return;
 
@@ -36,6 +38,14 @@ export function startBattle({
   console.log(
     `${playerActivePokemon.name} does ${playerDamage} damage to ${oppActivePokemon.name}`
   );
+
+  // Check if opponent's team is defeated
+  const isOpponentDefeated = opponentPokemon.every(pokemon => pokemon.currHP <= 0);
+  if (isOpponentDefeated) {
+    console.log("Battle won! Opponent team defeated.");
+    recordBattle(true); // Record victory
+    return;
+  }
 
   if (newOppHp <= 0) {
     console.log(`${oppActivePokemon.name} defeated.`);
@@ -65,6 +75,14 @@ export function startBattle({
   console.log(
     `${oppActivePokemon.name} does ${oppDamage} damage to ${playerActivePokemon.name}`
   );
+
+  // Check if player's team is defeated
+  const isPlayerDefeated = playerPokemon.every(pokemon => pokemon.currHP <= 0);
+  if (isPlayerDefeated) {
+    console.log("Battle lost! Player team defeated.");
+    recordBattle(false); // Record defeat
+    return;
+  }
 
   if (newPlayerHp <= 0) {
     console.log(`${playerActivePokemon.name} defeated.`);

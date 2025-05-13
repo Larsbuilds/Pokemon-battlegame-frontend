@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import gPokeballs from "../../assets/pokeballs.png";
 import Arena from "./Arena";
 import PlayerOverview from "./PlayerOverview";
@@ -8,19 +8,22 @@ import ActivePokemon from "./ActivePokemon";
 import HealthBar from "./HealthBar";
 import { startBattle } from "../../utils/battleLogic.jsx";
 import { switchPokemon } from "../../utils/switchPokemon.jsx";
+import BattleResultModal from "../BattleResultModal";
 
 const Battlescreen = () => {
   const {
     opponentPokemon,
-    battleData,
     playerPokemon,
     setPlayerPokemon,
     setOpponentPokemon,
+    recordBattle,
+    calculateScoreChange,
   } = useBattle();
 
   const [playerActivePokemon, setPlayerActivePokemon] = useState(null);
   const [oppActivePokemon, setOppActivePokemon] = useState(null);
   const [showMsg, setShowMsg] = useState(false);
+  const [battleResult, setBattleResult] = useState(null);
 
   useEffect(() => {
     if (playerActivePokemon) {
@@ -33,8 +36,6 @@ const Battlescreen = () => {
     }
   }, [playerActivePokemon]);
 
-  console.log("PLAYER ", playerPokemon);
-
   useEffect(() => {
     if (playerPokemon?.length > 0) {
       setPlayerActivePokemon(playerPokemon[0]);
@@ -44,8 +45,11 @@ const Battlescreen = () => {
     }
   }, []);
 
-  // console.log("Opponent", opponentPokemon);
-  // console.log("Player", playerPokemon);
+  const handleBattleEnd = (isWin) => {
+    const scoreChange = calculateScoreChange(playerPokemon, opponentPokemon, isWin);
+    setBattleResult({ isWin, scoreChange });
+    recordBattle(isWin);
+  };
 
   return (
     <div className="bg-cyan-950 p-4">
@@ -108,10 +112,17 @@ const Battlescreen = () => {
               setOpponentPokemon,
               switchPokemon,
               playerPokemon,
+              recordBattle: handleBattleEnd,
             })
           }
         />
       </div>
+      {battleResult && (
+        <BattleResultModal
+          isWin={battleResult.isWin}
+          scoreChange={battleResult.scoreChange}
+        />
+      )}
     </div>
   );
 };
