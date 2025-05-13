@@ -8,6 +8,7 @@ const ActionButtons = ({
   startBattle,
   playerPokemon,
   setPlayerActivePokemon,
+  blockFighting,
 }) => {
   console.log("Player in ActionB ", playerPokemon);
   return (
@@ -27,7 +28,8 @@ const ActionButtons = ({
       </button>
       <button
         onClick={() => startBattle()}
-        className="bg-red-400 py-2 px-3 rounded-md drop-shadow-sm flex gap-2"
+        disabled={blockFighting ? true : false}
+        className="bg-red-400 py-2 px-3 rounded-md drop-shadow-sm flex gap-2 disabled:bg-slate-500 disabled:text-slate-300"
       >
         <img src={gSwords}></img>
         <p>Attack!</p>

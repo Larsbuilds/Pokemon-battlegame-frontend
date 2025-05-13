@@ -11,23 +11,26 @@ export const switchPokemon = ({
     console.error("playerPokemon is not defined or empty");
     return;
   }
-  if (!playerPokemon || playerPokemon.length === 0) return; // Verhindern, dass bei fehlendem Pokémon weitergearbeitet wird
-  const alivePkmn = playerPokemon.filter((e) => e.currHP > 0);
-  // console.log("Alive ", alivePkmn);
+  if (!playerPokemon || playerPokemon.length === 0) return;
 
-  if (alivePkmn.length === 0) {
-    console.log("No alive Pokémon left to switch to.");
-    return;
-  }
+  setTimeout(() => {
+    const alivePkmn = playerPokemon.filter((e) => e.currHP > 0);
+    // console.log("Alive ", alivePkmn);
 
-  const currIndex = alivePkmn.findIndex(
-    (poke) => poke.id === playerActivePokemon.id
-  );
+    if (alivePkmn.length === 0) {
+      console.log("No alive Pokémon left to switch to.");
+      return;
+    }
 
-  let nextIndex = (currIndex + 1) % alivePkmn.length;
+    const currIndex = alivePkmn.findIndex(
+      (poke) => poke.id === playerActivePokemon.id
+    );
 
-  setPlayerActivePokemon(alivePkmn[nextIndex]);
-  // console.log("Next Pokemon Nr", nextIndex);
+    let nextIndex = (currIndex + 1) % alivePkmn.length;
+
+    setPlayerActivePokemon(alivePkmn[nextIndex]);
+    // console.log("Next Pokemon Nr", nextIndex);
+  }, 500);
 };
 
 export const switchEnemy = ({
@@ -43,8 +46,10 @@ export const switchEnemy = ({
     (poke) => poke.id === oppActivePokemon.id
   );
 
-  let nextIndex = (currIndex + 1) % alivePkmn.length;
+  setTimeout(() => {
+    let nextIndex = (currIndex + 1) % alivePkmn.length;
 
-  setOppActivePokemon(alivePkmn[nextIndex]);
-  // console.log("Next Pokemon Nr", nextIndex);
+    setOppActivePokemon(alivePkmn[nextIndex]);
+    // console.log("Next Pokemon Nr", nextIndex);
+  }, 500);
 };
