@@ -26,3 +26,76 @@ body {
 .animate-bounce-slow {
   animation: bounce-slow 2s infinite;
 }
+
+/* Battle Animations */
+@keyframes attack-left {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(50px);
+  }
+  50% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes attack-right {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-50px);
+  }
+  50% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes hit {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(0.9);
+  }
+  50% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes faint {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100px);
+    opacity: 0;
+  }
+}
+
+.animate-attack-left {
+  animation: attack-left 0.5s ease-in-out;
+}
+
+.animate-attack-right {
+  animation: attack-right 0.5s ease-in-out;
+}
+
+.animate-hit {
+  animation: hit 0.5s ease-in-out;
+}
+
+.animate-faint {
+  animation: faint 1s ease-in-out forwards;
+}

@@ -29,28 +29,30 @@ const ActivePokemon = ({
     }
 
     playerEl.addEventListener("animationend", cleanup);
-  }, [playerAnimation?.id]);
+    return cleanup;
+  }, [playerAnimation]);
 
   useEffect(() => {
-    const oppEl = opponentRef.current;
     const playerEl = playerRef.current;
-    if (!oppEl || !opponentAnimation?.type) return;
+    const opponentEl = opponentRef.current;
+    if (!opponentEl || !opponentAnimation?.type) return;
 
     const cleanup = () => {
-      oppEl.classList.remove("animate-attack-right", "animate-faint");
+      opponentEl.classList.remove("animate-attack-right", "animate-faint");
       playerEl?.classList.remove("animate-hit");
-      oppEl.removeEventListener("animationend", cleanup);
+      opponentEl.removeEventListener("animationend", cleanup);
     };
 
     if (opponentAnimation.type === "attack") {
-      oppEl.classList.add("animate-attack-right");
+      opponentEl.classList.add("animate-attack-right");
       playerEl?.classList.add("animate-hit");
     } else if (opponentAnimation.type === "faint") {
-      oppEl.classList.add("animate-faint");
+      opponentEl.classList.add("animate-faint");
     }
 
-    oppEl.addEventListener("animationend", cleanup);
-  }, [opponentAnimation?.id]);
+    opponentEl.addEventListener("animationend", cleanup);
+    return cleanup;
+  }, [opponentAnimation]);
 
   if (!playerPkmn || !oppPkmn) return null;
 

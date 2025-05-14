@@ -79,97 +79,127 @@ export function startBattle({
   setOpponentPokemon,
   switchPokemon,
   playerPokemon,
+  setPlayerAnimation,
+  setOpponentAnimation,
+  setBlockFighting,
   recordBattle,
   onBattleMessage,
 }) {
   if (!playerActivePokemon || !oppActivePokemon) return;
 
+  // Block fighting during animations
+  setBlockFighting(true);
+
   // Player's attack
   const playerAttack = calculateDamage(playerActivePokemon, oppActivePokemon);
   const newOppHp = oppActivePokemon.currHP - playerAttack.damage;
 
-  setOppActivePokemon((prev) => ({
-    ...prev,
-    currHP: newOppHp < 0 ? 0 : newOppHp,
-  }));
+  // Trigger player attack animation
+  setPlayerAnimation({ type: "attack", id: Date.now() });
 
-  setOpponentPokemon((prevTeam) =>
-    prevTeam.map((pokemon) =>
-      pokemon.id === oppActivePokemon.id
-        ? { ...pokemon, currHP: newOppHp < 0 ? 0 : newOppHp }
-        : pokemon
-    )
-  );
+  // Wait for animation to complete before applying damage
+  setTimeout(() => {
+    setOppActivePokemon((prev) => ({
+      ...prev,
+      currHP: newOppHp < 0 ? 0 : newOppHp,
+    }));
 
-  // Create battle message with type effectiveness
-  let battleMessage = `${playerActivePokemon.name} does ${playerAttack.damage} damage to ${oppActivePokemon.name}`;
-  if (playerAttack.isCritical) {
-    battleMessage += " (Critical Hit!)";
-  }
-  if (playerAttack.typeMultiplier > 1) {
-    battleMessage += " (Super Effective!)";
-  } else if (playerAttack.typeMultiplier < 1) {
-    battleMessage += " (Not Very Effective...)";
-  }
-  onBattleMessage?.(battleMessage);
+    setOpponentPokemon((prevTeam) =>
+      prevTeam.map((pokemon) =>
+        pokemon.id === oppActivePokemon.id
+          ? { ...pokemon, currHP: newOppHp < 0 ? 0 : newOppHp }
+          : pokemon
+      )
+    );
 
-  // Check if opponent's team is defeated
-  const isOpponentDefeated = opponentPokemon.every(pokemon => pokemon.currHP <= 0);
-  if (isOpponentDefeated) {
-    onBattleMessage?.("Battle won! Opponent team defeated.");
-    recordBattle(true); // Record victory
-    return;
-  }
+    // Create battle message with type effectiveness
+    let battleMessage = `${playerActivePokemon.name} does ${playerAttack.damage} damage to ${oppActivePokemon.name}`;
+    if (playerAttack.isCritical) {
+      battleMessage += " (Critical Hit!)";
+    }
+    if (playerAttack.typeMultiplier > 1) {
+      battleMessage += " (Super Effective!)";
+    } else if (playerAttack.typeMultiplier < 1) {
+      battleMessage += " (Not Very Effective...)";
+    }
+    onBattleMessage?.(battleMessage);
 
-  if (newOppHp <= 0) {
-    onBattleMessage?.(`${oppActivePokemon.name} defeated.`);
-    switchEnemy({ opponentPokemon, oppActivePokemon, setOppActivePokemon });
-    return;
-  }
+    // Check if opponent's team is defeated
+    const isOpponentDefeated = opponentPokemon.every(pokemon => pokemon.currHP <= 0);
+    if (isOpponentDefeated) {
+      onBattleMessage?.("Battle won! Opponent team defeated.");
+      recordBattle(true); // Record victory
+      setBlockFighting(false);
+      return;
+    }
 
-  // Opponent's attack
-  const oppAttack = calculateDamage(oppActivePokemon, playerActivePokemon);
-  const newPlayerHp = playerActivePokemon.currHP - oppAttack.damage;
+    if (newOppHp <= 0) {
+      onBattleMessage?.(`${oppActivePokemon.name} defeated.`);
+      setOpponentAnimation({ type: "faint", id: Date.now() });
+      setTimeout(() => {
+        switchEnemy({ opponentPokemon, oppActivePokemon, setOppActivePokemon });
+        setBlockFighting(false);
+      }, 1000);
+      return;
+    }
 
-  setPlayerActivePokemon((prev) => ({
-    ...prev,
-    currHP: newPlayerHp < 0 ? 0 : newPlayerHp,
-  }));
+    // Opponent's attack
+    const oppAttack = calculateDamage(oppActivePokemon, playerActivePokemon);
+    const newPlayerHp = playerActivePokemon.currHP - oppAttack.damage;
 
-  setPlayerPokemon((prevTeam) =>
-    prevTeam.map((pokemon) =>
-      pokemon.id === playerActivePokemon.id
-        ? { ...pokemon, currHP: newPlayerHp < 0 ? 0 : newPlayerHp }
-        : pokemon
-    )
-  );
+    // Trigger opponent attack animation
+    setOpponentAnimation({ type: "attack", id: Date.now() });
 
-  // Create opponent's battle message
-  let oppBattleMessage = `${oppActivePokemon.name} does ${oppAttack.damage} damage to ${playerActivePokemon.name}`;
-  if (oppAttack.isCritical) {
-    oppBattleMessage += " (Critical Hit!)";
-  }
-  if (oppAttack.typeMultiplier > 1) {
-    oppBattleMessage += " (Super Effective!)";
-  } else if (oppAttack.typeMultiplier < 1) {
-    oppBattleMessage += " (Not Very Effective...)";
-  }
-  onBattleMessage?.(oppBattleMessage);
+    // Wait for animation to complete before applying damage
+    setTimeout(() => {
+      setPlayerActivePokemon((prev) => ({
+        ...prev,
+        currHP: newPlayerHp < 0 ? 0 : newPlayerHp,
+      }));
 
-  // Check if player's team is defeated
-  const isPlayerDefeated = playerPokemon.every(pokemon => pokemon.currHP <= 0);
-  if (isPlayerDefeated) {
-    onBattleMessage?.("Battle lost! Player team defeated.");
-    recordBattle(false); // Record defeat
-    return;
-  }
+      setPlayerPokemon((prevTeam) =>
+        prevTeam.map((pokemon) =>
+          pokemon.id === playerActivePokemon.id
+            ? { ...pokemon, currHP: newPlayerHp < 0 ? 0 : newPlayerHp }
+            : pokemon
+        )
+      );
 
-  if (newPlayerHp <= 0) {
-    onBattleMessage?.(`${playerActivePokemon.name} defeated.`);
-    switchPokemon({
-      playerPokemon,
-      playerActivePokemon,
-      setPlayerActivePokemon,
-    });
-  }
+      // Create opponent's battle message
+      let oppBattleMessage = `${oppActivePokemon.name} does ${oppAttack.damage} damage to ${playerActivePokemon.name}`;
+      if (oppAttack.isCritical) {
+        oppBattleMessage += " (Critical Hit!)";
+      }
+      if (oppAttack.typeMultiplier > 1) {
+        oppBattleMessage += " (Super Effective!)";
+      } else if (oppAttack.typeMultiplier < 1) {
+        oppBattleMessage += " (Not Very Effective...)";
+      }
+      onBattleMessage?.(oppBattleMessage);
+
+      // Check if player's team is defeated
+      const isPlayerDefeated = playerPokemon.every(pokemon => pokemon.currHP <= 0);
+      if (isPlayerDefeated) {
+        onBattleMessage?.("Battle lost! Player team defeated.");
+        recordBattle(false); // Record defeat
+        setBlockFighting(false);
+        return;
+      }
+
+      if (newPlayerHp <= 0) {
+        onBattleMessage?.(`${playerActivePokemon.name} defeated.`);
+        setPlayerAnimation({ type: "faint", id: Date.now() });
+        setTimeout(() => {
+          switchPokemon({
+            playerPokemon,
+            playerActivePokemon,
+            setPlayerActivePokemon,
+          });
+          setBlockFighting(false);
+        }, 1000);
+      } else {
+        setBlockFighting(false);
+      }
+    }, 1000);
+  }, 1000);
 }
