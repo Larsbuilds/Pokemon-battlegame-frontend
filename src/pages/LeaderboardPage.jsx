@@ -2,8 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useBattle } from "../context/BattleContext";
 
 const LeaderboardPage = () => {
-  const { playerStats, battleHistory, leaderboard, allGlobalPlayers } =
-    useBattle();
+  const {
+    playerStats,
+    battleHistory,
+    leaderboard,
+    allGlobalPlayers,
+    presentPlayer,
+  } = useBattle();
   const [sortBy, setSortBy] = useState("score");
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -417,7 +422,7 @@ const LeaderboardPage = () => {
           {/* User Profile Section */}
           <div style={sectionStyle}>
             <h2 style={{ marginBottom: "1rem", color: "#333" }}>
-              Your Profile
+              Your Profile: {presentPlayer.name}
             </h2>
             <div style={statsGridStyle}>
               <div style={statCardStyle}>
@@ -431,22 +436,38 @@ const LeaderboardPage = () => {
                     color: "#333",
                   }}
                 >
-                  {playerStats.score}
+                  {presentPlayer.scores}
                 </p>
               </div>
               <div style={statCardStyle}>
                 <h3 style={{ marginBottom: "0.5rem", color: "#666" }}>
                   Win Rate
                 </h3>
-                <p
-                  style={{
-                    fontSize: "1.5rem",
-                    fontWeight: "bold",
-                    color: "#333",
-                  }}
-                >
-                  {playerStats.winRate.toFixed(1)}%
-                </p>
+                {presentPlayer.totalBattles > 0 ? (
+                  <p
+                    style={{
+                      fontSize: "1.5rem",
+                      fontWeight: "bold",
+                      color: "#333",
+                    }}
+                  >
+                    {(
+                      (presentPlayer.wins / presentPlayer.totalBattles) *
+                      100
+                    ).toFixed(1)}
+                    %
+                  </p>
+                ) : (
+                  <p
+                    style={{
+                      fontSize: "1.5rem",
+                      fontWeight: "bold",
+                      color: "#333",
+                    }}
+                  >
+                    {0}%
+                  </p>
+                )}
               </div>
               <div style={statCardStyle}>
                 <h3 style={{ marginBottom: "0.5rem", color: "#666" }}>
@@ -459,7 +480,7 @@ const LeaderboardPage = () => {
                     color: "#333",
                   }}
                 >
-                  {playerStats.totalBattles}
+                  {presentPlayer.totalBattles}
                 </p>
               </div>
               <div style={statCardStyle}>
@@ -473,7 +494,7 @@ const LeaderboardPage = () => {
                     color: "#333",
                   }}
                 >
-                  {playerStats.wins}/{playerStats.losses}
+                  {presentPlayer.wins}/{presentPlayer.losses}
                 </p>
               </div>
             </div>

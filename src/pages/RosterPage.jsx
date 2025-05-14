@@ -53,7 +53,11 @@ const RosterPage = () => {
       setPlayerNameAndSave(name);
       setShowNamePopup(false);
       setShowWarning(false);
-      setPresentPlayer(name);
+      allGlobalPlayers.forEach((player) => {
+        if (name === player.name) {
+          setPresentPlayer(player);
+        }
+      });
       setExistingNameAccept(false);
     } else {
       setShowWarning(true);
