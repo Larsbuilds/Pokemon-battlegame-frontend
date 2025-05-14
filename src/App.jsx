@@ -45,12 +45,12 @@ function App() {
                       >
                         My Roster
                       </Link>
-                      <Link
+                      {/* <Link
                         to="/battle"
                         className="hover:text-pokemon-yellow transition-colors"
                       >
                         Battle
-                      </Link>
+                      </Link> */}
                       <Link
                         to="/leaderboard"
                         className="hover:text-pokemon-yellow transition-colors"

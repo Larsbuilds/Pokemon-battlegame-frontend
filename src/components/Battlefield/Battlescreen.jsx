@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import gPokeballs from "../../assets/pokeballs.png";
 import Arena from "./Arena";
 import PlayerOverview from "./PlayerOverview";
@@ -18,6 +18,9 @@ const Battlescreen = () => {
     setOpponentPokemon,
     recordBattle,
     calculateScoreChange,
+    score,
+    wins,
+    losses,
   } = useBattle();
 
   const [playerActivePokemon, setPlayerActivePokemon] = useState(null);
@@ -30,6 +33,14 @@ const Battlescreen = () => {
   const [opponentAnimation, setOpponentAnimation] = useState(null);
   const [blockFighting, setBlockFighting] = useState(false);
 
+  //Battle Message Queue
+  const [battleMessageList, setBattleMessageList] = useState([]);
+  const [messageQueue, setMessageQueue] = useState([]);
+  const [currentMessage, setCurrentMessage] = useState(null);
+  const [isMessageVisible, setIsMessageVisible] = useState(false);
+  const messageTimeoutRef = useRef(null);
+
+  //handle pokemon switch messages
   useEffect(() => {
     if (playerActivePokemon) {
       setShowMsg(true);
@@ -41,6 +52,7 @@ const Battlescreen = () => {
     }
   }, [playerActivePokemon]);
 
+  //Initial fighting pokemon
   useEffect(() => {
     if (playerPokemon?.length > 0) {
       setPlayerActivePokemon(playerPokemon[0]);
@@ -49,6 +61,31 @@ const Battlescreen = () => {
       setOppActivePokemon(opponentPokemon[0]);
     }
   }, []);
+
+  //display battle messages
+
+  useEffect(() => {
+    if (messageQueue.length > 0 && !currentMessage) {
+      const nextMsg = messageQueue[0];
+      setCurrentMessage(nextMsg);
+      setIsMessageVisible(true);
+
+      messageTimeoutRef.current = setTimeout(() => {
+        setIsMessageVisible(false);
+
+        setTimeout(() => {
+          setCurrentMessage(null);
+          setMessageQueue((prevQueue) => prevQueue.slice(1));
+        }, 500);
+      }, 2000);
+    }
+
+    return () => {
+      if (messageTimeoutRef.current) {
+        clearTimeout(messageTimeoutRef.current);
+      }
+    };
+  }, [messageQueue, currentMessage]);
 
   const handleBattleEnd = (isWin) => {
     const scoreChange = calculateScoreChange(
@@ -61,9 +98,12 @@ const Battlescreen = () => {
   };
 
   const handleBattleMessage = (message) => {
-    setBattleMessage(message);
-    // Clear message after 3 seconds
-    setTimeout(() => setBattleMessage(""), 3000);
+    setMessageQueue((prevQueue) => {
+      if (prevQueue.some((msg) => msg.text === message)) {
+        return prevQueue;
+      }
+      return [...prevQueue, { id: crypto.randomUUID(), text: message }];
+    });
   };
 
   return (
@@ -79,14 +119,21 @@ const Battlescreen = () => {
         {showMsg && (
           <div
             key={playerActivePokemon?.id}
-            className="absolute -translate-y-1/2 bg-white rounded-md p-2 font-bold animate-riseFade z-[9999] shadow-xl"
+            className="absolute -ml-96 -translate-y-1/3 bg-white rounded-md p-2 font-bold animate-riseFade z-[9999] shadow-xl"
           >
             <p>Go, {playerActivePokemon?.name.toUpperCase()} !!!</p>
           </div>
         )}
-        {battleMessage && (
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 bg-white/90 rounded-md p-3 font-bold animate-riseFade z-[9999] shadow-xl text-center min-w-[200px]">
-            <p>{battleMessage}</p>
+        {currentMessage && (
+          <div
+            key={currentMessage.id}
+            className={`absolute left-1/2 -translate-x-1/2 bg-white/90 rounded-md p-3 font-bold z-[9999] shadow-xl text-center min-w-[200px]
+      transition-opacity duration-500 ${
+        isMessageVisible ? "opacity-100 animate-riseFade" : "opacity-0"
+      }`}
+          >
+            {console.log("Rendering message:", currentMessage)}
+            <p>{currentMessage.text}</p>
           </div>
         )}
         <div className="z-50 absolute w-[1120px] flex items-center justify-between px-8">
@@ -115,6 +162,9 @@ const Battlescreen = () => {
             pokemon={opponentPokemon}
             playerActivePokemon={playerActivePokemon}
             oppActivePokemon={oppActivePokemon}
+            score={score}
+            wins={wins}
+            losses={losses}
           />
         </div>
         <Arena />
@@ -138,24 +188,11 @@ const Battlescreen = () => {
               setPlayerAnimation,
               setOpponentAnimation,
               setBlockFighting,
-
               recordBattle: handleBattleEnd,
               onBattleMessage: handleBattleMessage,
             })
           }
         />
-        {/* <button
-          onClick={() => setPlayerAnimation({ type: "attack", id: Date.now() })}
-        >
-          AATTACKKK Player{" "}
-        </button>
-        <button
-          onClick={() =>
-            setOpponentAnimation({ type: "faint", id: Date.now() })
-          }
-        >
-          Die Opp
-        </button>*/}
       </div>
       {battleResult && (
         <BattleResultModal
