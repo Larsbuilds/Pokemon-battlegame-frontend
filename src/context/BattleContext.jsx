@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRoster } from "./RosterContext";
+import { useFetchPlayers } from "../hooks/useFetch.js";
 
 const BattleContext = createContext();
 
@@ -20,17 +21,43 @@ export const BattleProvider = ({ children }) => {
     const savedName = localStorage.getItem("playerName");
     return savedName || "";
   });
+  const [presentPlayer, setPresentPlayer] = useState({
+    name: "",
+    scores: 0,
+    wins: 0,
+    losses: 0,
+    totalBattles: 0,
+    recentBattles: "1970-01-01",
+    recentOpponent: "",
+    resultRecentBattle: 0,
+    scoreChange: 10,
+  });
+
+  const callPlayers = () => {
+    const { data, error, loading } = useFetchPlayers();
+    if (error) console.log("error while fetching");
+    if (loading) console.log("loading players");
+    // console.log("GlobalPlayers", data);
+    return data;
+  };
+  const globalPlayers = callPlayers();
+  const allGlobalPlayers = [...globalPlayers].sort((a, b) => {
+    return b.scores - a.scores;
+  });
+  // console.log("allGlobal", allGlobalPlayers);
 
   // New state for scoring system and leaderboard
   const [playerStats, setPlayerStats] = useState(() => {
     const savedStats = localStorage.getItem("playerStats");
-    return savedStats ? JSON.parse(savedStats) : {
-      wins: 0,
-      losses: 0,
-      totalBattles: 0,
-      score: 1000, // Initial ELO-like score
-      winRate: 0
-    };
+    return savedStats
+      ? JSON.parse(savedStats)
+      : {
+          wins: 0,
+          losses: 0,
+          totalBattles: 0,
+          score: 1000, // Initial ELO-like score
+          winRate: 0,
+        };
   });
 
   const [battleHistory, setBattleHistory] = useState(() => {
@@ -47,16 +74,27 @@ export const BattleProvider = ({ children }) => {
   const calculateScoreChange = (playerTeam, opponentTeam, isWin) => {
     // Basic ELO-like scoring system
     const baseChange = 25;
-    const playerTeamStrength = playerTeam.reduce((sum, pokemon) => 
-      sum + pokemon.stats.reduce((statSum, stat) => statSum + stat.base_stat, 0), 0);
-    const opponentTeamStrength = opponentTeam.reduce((sum, pokemon) => 
-      sum + pokemon.stats.reduce((statSum, stat) => statSum + stat.base_stat, 0), 0);
-    
+    const playerTeamStrength = playerTeam.reduce(
+      (sum, pokemon) =>
+        sum +
+        pokemon.stats.reduce((statSum, stat) => statSum + stat.base_stat, 0),
+      0
+    );
+    const opponentTeamStrength = opponentTeam.reduce(
+      (sum, pokemon) =>
+        sum +
+        pokemon.stats.reduce((statSum, stat) => statSum + stat.base_stat, 0),
+      0
+    );
+
     // If opponent is stronger, winning gives more points and losing gives fewer points
     // If opponent is weaker, winning gives fewer points and losing gives more points
-    const strengthDifference = (opponentTeamStrength - playerTeamStrength) / 100;
-    const scoreChange = Math.round(baseChange * (isWin ? 1 : -1) * (1 - strengthDifference));
-    
+    const strengthDifference =
+      (opponentTeamStrength - playerTeamStrength) / 100;
+    const scoreChange = Math.round(
+      baseChange * (isWin ? 1 : -1) * (1 - strengthDifference)
+    );
+
     return scoreChange;
   };
 
@@ -66,8 +104,11 @@ export const BattleProvider = ({ children }) => {
       wins: isWin ? playerStats.wins + 1 : playerStats.wins,
       losses: isWin ? playerStats.losses : playerStats.losses + 1,
       totalBattles: playerStats.totalBattles + 1,
-      winRate: ((isWin ? playerStats.wins + 1 : playerStats.wins) / (playerStats.totalBattles + 1)) * 100,
-      score: newScore // Update the score
+      winRate:
+        ((isWin ? playerStats.wins + 1 : playerStats.wins) /
+          (playerStats.totalBattles + 1)) *
+        100,
+      score: newScore, // Update the score
     };
     setPlayerStats(newStats);
     localStorage.setItem("playerStats", JSON.stringify(newStats));
@@ -81,16 +122,20 @@ export const BattleProvider = ({ children }) => {
       return;
     }
 
-    const scoreChange = calculateScoreChange(playerPokemon, opponentPokemon, isWin);
+    const scoreChange = calculateScoreChange(
+      playerPokemon,
+      opponentPokemon,
+      isWin
+    );
     const newScore = playerStats.score + scoreChange;
-    
+
     const battleRecord = {
       date: new Date().toISOString(),
       opponent: "Opponent", // This can be replaced with actual opponent name when implemented
       result: isWin ? "win" : "loss",
       scoreChange: scoreChange,
       playerTeam: playerPokemon,
-      opponentTeam: opponentPokemon
+      opponentTeam: opponentPokemon,
     };
 
     const newHistory = [battleRecord, ...battleHistory];
@@ -116,12 +161,14 @@ export const BattleProvider = ({ children }) => {
       winRate: stats.winRate,
       totalBattles: stats.totalBattles,
       wins: stats.wins,
-      losses: stats.losses
+      losses: stats.losses,
     };
 
     const newLeaderboard = [...leaderboard];
-    const existingIndex = newLeaderboard.findIndex(entry => entry.playerId === playerEntry.playerId);
-    
+    const existingIndex = newLeaderboard.findIndex(
+      (entry) => entry.playerId === playerEntry.playerId
+    );
+
     if (existingIndex !== -1) {
       newLeaderboard[existingIndex] = playerEntry;
     } else {
@@ -130,7 +177,7 @@ export const BattleProvider = ({ children }) => {
 
     // Sort by score
     newLeaderboard.sort((a, b) => b.score - a.score);
-    
+
     // Add ranks
     newLeaderboard.forEach((entry, index) => {
       entry.rank = index + 1;
@@ -662,7 +709,10 @@ export const BattleProvider = ({ children }) => {
     recordBattle,
     calculateScoreChange,
     updatePlayerStats,
-    updateLeaderboard
+    updateLeaderboard,
+    allGlobalPlayers,
+    presentPlayer,
+    setPresentPlayer,
   };
 
   return (
