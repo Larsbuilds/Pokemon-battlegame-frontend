@@ -7,6 +7,7 @@ const PlayerOverview = ({
   pokemon,
   playerActivePokemon,
   oppActivePokemon,
+  playerName,
 }) => {
   const markActivePokemon = (e) => {
     const isActive =
@@ -27,7 +28,9 @@ const PlayerOverview = ({
         src={player === 1 ? gP1 : gP2}
       ></img>
       <div className="bg-white rounded-lg p-4">
-        <p className="mt-8 font-bold text-center">NAME</p>
+        <p className="mt-8 font-bold text-center">
+          {playerName ? playerName : "POKé TRAINER"}
+        </p>
         <div className="grid grid-cols-2 w-full items-center gap-1">
           {pokemon?.map((e, index) => (
             <div key={`${e.id}-${index}`} className="">
