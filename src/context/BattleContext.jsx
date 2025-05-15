@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRoster } from "./RosterContext";
+import { useFetchPlayers } from "../hooks/useFetch.js";
 
 const BattleContext = createContext();
 
@@ -20,6 +21,30 @@ export const BattleProvider = ({ children }) => {
     const savedName = localStorage.getItem("playerName");
     return savedName || "";
   });
+  const [presentPlayer, setPresentPlayer] = useState({
+    name: "",
+    scores: 0,
+    wins: 0,
+    losses: 0,
+    totalBattles: 0,
+    recentBattles: "1970-01-01",
+    recentOpponent: "",
+    resultRecentBattle: 0,
+    scoreChange: 10,
+  });
+
+  const callPlayers = () => {
+    const { data, error, loading } = useFetchPlayers();
+    if (error) console.log("error while fetching");
+    if (loading) console.log("loading players");
+    // console.log("GlobalPlayers", data);
+    return data;
+  };
+  const globalPlayers = callPlayers();
+  const allGlobalPlayers = [...globalPlayers].sort((a, b) => {
+    return b.scores - a.scores;
+  });
+  // console.log("allGlobal", allGlobalPlayers);
 
   // New state for scoring system and leaderboard
   const [playerStats, setPlayerStats] = useState(() => {
@@ -685,6 +710,9 @@ export const BattleProvider = ({ children }) => {
     calculateScoreChange,
     updatePlayerStats,
     updateLeaderboard,
+    allGlobalPlayers,
+    presentPlayer,
+    setPresentPlayer,
   };
 
   return (
