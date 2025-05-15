@@ -8,6 +8,9 @@ const PlayerOverview = ({
   playerActivePokemon,
   oppActivePokemon,
   playerName,
+  score,
+  wins,
+  losses,
 }) => {
   const markActivePokemon = (e) => {
     const isActive =
@@ -20,6 +23,10 @@ const PlayerOverview = ({
   const markDeadPokemon = (e) => {
     return e.currHP <= 0 ? "opacity-25" : "";
   };
+  console.log("Playername ", playerName);
+  console.log("Score ", score);
+  console.log("wins ", wins);
+  console.log("losses ", losses);
 
   return (
     <div className="relative -top-8">
@@ -44,14 +51,20 @@ const PlayerOverview = ({
             </div>
           ))}
         </div>
-        <div className="w-full">
-          <div className="w-full h-[1px] my-4 bg-black"></div>
-          <p className="text-center font-semibold">200 Points</p>
-          <div className="flex gap-2">
-            <p>Won: 1</p>
-            <p>Lost: 2</p>
-          </div>
-        </div>
+        {player === 1 ? (
+          <>
+            <div className="w-full">
+              <div className="w-full h-[1px] my-4 bg-black"></div>
+              <p className="text-center font-semibold">{score}Points</p>
+              <div className="flex gap-2">
+                <p>Won: {wins}</p>
+                <p>Lost: {losses}</p>
+              </div>
+            </div>
+          </>
+        ) : (
+          ""
+        )}
       </div>
     </div>
   );
